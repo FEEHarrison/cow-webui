@@ -44,24 +44,24 @@ def generate_qr_code():
 def save_qr_code(filename=None):
     """将二维码保存到 static/qrcodes 文件夹"""
     # 确保 static/qrcodes 文件夹存在
-    qr_folder = os.path.join(os.getcwd(), 'static/qrcodes')
-    if not os.path.exists(qr_folder):
-        os.makedirs(qr_folder)
-    uuid_str = str(uuid.uuid4())
-    # 默认文件名为 uuid.png
-    if filename is None:
-        filename = f'{uuid_str}.png'
+    # qr_folder = os.path.join(os.getcwd(), 'static/qrcodes')
+    # if not os.path.exists(qr_folder):
+    #     os.makedirs(qr_folder)
+    # uuid_str = str(uuid.uuid4())
+    # # 默认文件名为 uuid.png
+    # if filename is None:
+    #     filename = f'{uuid_str}.png'
     
-    # 构建完整的文件路径
-    file_path = os.path.join(qr_folder, filename)
+    # # 构建完整的文件路径
+    # file_path = os.path.join(qr_folder, filename)
     
-    # 生成二维码并保存到文件
-    qr_storage = generate_qr_code()
-    with open(file_path, 'wb') as f:
-        f.write(qr_storage.getvalue())
+    # # 生成二维码并保存到文件
+    # qr_storage = generate_qr_code()
+    # with open(file_path, 'wb') as f:
+    #     f.write(qr_storage.getvalue())
     
-    print(f"二维码已保存到: {file_path}")
-    return file_path
+    # print(f"二维码已保存到: {file_path}")
+    # return file_path
 
 class DockerManager:
     def __init__(self):

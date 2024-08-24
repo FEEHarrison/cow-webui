@@ -13,8 +13,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:5002', // 确保这是你的后端服务器地址
+        target: 'http://82.197.95.98:5002', // 确保这是你的后端服务器地址
         changeOrigin: true,
+        timeout: 60000, // 设置超时时间为 60 秒
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },

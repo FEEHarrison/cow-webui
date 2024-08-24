@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from docker_manager import DockerManager
 import os
+from flask_cors import CORS  # 添加 CORS 支持
 
 def make_response(code=200, success=True, data=None, message="操作成功"):
     """统一的响应格式"""
@@ -12,13 +13,15 @@ def make_response(code=200, success=True, data=None, message="操作成功"):
     })
 
 app = Flask(__name__)
+CORS(app)  # 启用 CORS
 # Disable caching for streamed responses
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 app.config['TEMPLATES_AUTO_RELOAD'] = True
+
 # 配置静态文件目录
-app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'static/qrcodes')
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
+# app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'static/qrcodes')
+# if not os.path.exists(app.config['UPLOAD_FOLDER']):
+#     os.makedirs(app.config['UPLOAD_FOLDER'])
 
 docker_manager = DockerManager()
 
