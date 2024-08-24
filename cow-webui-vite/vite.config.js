@@ -13,10 +13,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://82.197.95.98:5002', // 确保这是你的后端服务器地址
+        target: 'https://wx.aigcboundless.cn', // 确保这是你的后端服务器地址
         changeOrigin: true,
+        secure: true, // 添加此项以确保代理到 HTTPS 地址
         timeout: 60000, // 设置超时时间为 60 秒
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(/^\/api/, '/api'),
       },
     },
   },
