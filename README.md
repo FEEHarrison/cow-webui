@@ -65,24 +65,24 @@ npm install
 
 ### 启动后端
 
-\```bash
+```bash
 python app.py
-\```
+```
 
 ### 启动前端
 
-\```bash
+```bash
 cd cow-webui-vite
 npm run dev
-\```
+```
 
 ## 使用 Docker
 
 项目提供了 Docker 支持，使用以下命令启动：
 
-\```bash
+```bash
 docker-compose -f configs/9b1df1ee/docker-compose.yml up --build
-\```
+```
 
 ## 项目配置
 
