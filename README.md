@@ -63,10 +63,18 @@ npm install
 
 ## 启动应用程序
 
-### 启动后端
+### 本地启动后端
 
 ```bash
 python app.py
+```
+### 服务器启动后端
+
+```bash
+nohup python3 app.py & tail -f nohup.out //启动服务
+ps -ef | grep app.py | grep -v grep //命令可查看运行于后台的进程
+kill 进程id //关闭进程
+tail -f nohup.out //查看日志
 ```
 
 ### 启动前端
@@ -75,6 +83,19 @@ python app.py
 cd cow-webui-vite
 npm run dev
 ```
+### 服务器启动前端
+#### 本地打包
+```bash
+npm run build
+```
+#### 将dist文件部署到服务器使用nginx代理
+```bash
+#nginx vue
+location / {
+    try_files $uri $uri/ /index.html;
+}
+```
+
 
 ## 使用 Docker
 

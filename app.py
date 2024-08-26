@@ -25,6 +25,7 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 docker_manager = DockerManager()
 
+
 @app.route('/api/create_bot', methods=['POST'])
 def create_bot():
     config_data = request.json
