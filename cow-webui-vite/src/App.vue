@@ -88,7 +88,6 @@
         </el-table>
         <el-dialog
           v-model="dialogVisible"
-          width="30%"
           class="dialogStyle"
           @close="closeDialog"
         >
@@ -191,19 +190,6 @@ const deleteBot = async (bot_id) => {
       fetchBots();
     } else {
       throw new Error(response.message || "机器人删除失败");
-    }
-  } catch (err) {
-    ElMessage.error(err.message);
-  }
-};
-
-const getBotConfig = async (bot_id) => {
-  try {
-    const response = await request.get(`/api/get_bot_config/${bot_id}`);
-    if (response.success && response.code === 200) {
-      ElMessage.info(`机器人配置: ${JSON.stringify(response.data, null, 2)}`);
-    } else {
-      throw new Error(response.message || "获取机器人配置失败");
     }
   } catch (err) {
     ElMessage.error(err.message);

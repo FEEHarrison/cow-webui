@@ -1,8 +1,8 @@
 {
   "channel_type": "wx",
   "model": "gpt-4o",
-  "open_ai_api_key": "sk-yQjYDObCvsg1RBF128A9C418Bb9242A8B349E573A1E875A7",
-  "open_ai_api_base": "https://api.qaqgpt.com/v1",
+  "open_ai_api_key": "sk-xxxx",
+  "open_ai_api_base": "https://api.openai.com/v1",
   "claude_api_key": "YOUR API KEY",
   "text_to_image": "dall-e-2",
   "voice_to_text": "openai",

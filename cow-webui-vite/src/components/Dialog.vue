@@ -96,7 +96,6 @@ const { loading, withLoading } = useLoading();
 
 const openConfigDialog = async (data, id) => {
   dialogVisible.value = true;
-  console.log("data", data);
   const new_config = data || {};
   console.log(new_config, new_config?.GROUP_NAME_WHITE_LIST);
   config.value = {

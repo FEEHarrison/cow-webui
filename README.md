@@ -68,6 +68,13 @@ npm install
 ```bash
 python app.py
 ```
+### 本地启动前端
+
+```bash
+cd cow-webui-vite
+npm run dev
+```
+
 ### 服务器启动后端
 
 ```bash
