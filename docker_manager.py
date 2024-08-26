@@ -152,7 +152,42 @@ class DockerManager:
         
         return config_path
     
-    
+    def add_bots(self, container_id, data):
+        try:
+            bots_file_path = os.path.join(get_data_dir(), 'bots.json')
+            
+            with open(bots_file_path, 'r') as file:
+                bots_data = json.load(file)
+            
+            bots_data[container_id] = data
+            # if container_id in bots_data:
+            #     # del bots_data[container_id]
+            #     bots_data[container_id] = data
+            
+            with open(bots_file_path, 'w') as file:
+                json.dump(bots_data, file, indent=4)
+            
+        except Exception as e:
+            print(f"Failed to change bots.json: {e}")
+            return False
+    def del_bots(self, container_id):
+        try:
+            bots_file_path = os.path.join(get_data_dir(), 'bots.json')
+            
+            with open(bots_file_path, 'r') as file:
+                bots_data = json.load(file)
+            
+            # bots_data[container_id] = data
+            if container_id in bots_data:
+                del bots_data[container_id]
+                # bots_data[container_id] = data
+            
+            with open(bots_file_path, 'w') as file:
+                json.dump(bots_data, file, indent=4)
+            
+        except Exception as e:
+            print(f"Failed to change bots.json: {e}")
+            return False
     def start_docker_container(self, config_data):
         # 清理未使用的Docker网络
         try:
@@ -182,8 +217,9 @@ class DockerManager:
                 "container_id": container_id,
                 "service_id": service_id
             }
-            self.bots[container_id] = body
-            self.save_bots()
+            self.add_bots(container_id,body)
+            # self.bots[container_id] = body
+            # self.save_bots()
 
             return self.bots[container_id]
         except Exception as e:
@@ -192,23 +228,7 @@ class DockerManager:
        
 
     def get_bot_list(self):
-        # bot_list = []
-        # for container_id,value in self.bots.items():
-        #     try:
-        #         container = self.client.containers.get(container_id)  # 使用完整容器 ID
-                
-        #         status = container.status
-        #     except docker.errors.NotFound:
-        #         status = "not found"
-          
-        #     bot_list.append({
-        #         "id": container_id,
-        #         "service_id":value['service_id'],
-        #         "name": value['name'],
-        #         "status": status,
-        #         "config":value['config']
-        #     })
-        # return bot_list
+        
         bots_file_path = os.path.join(get_data_dir(), 'bots.json')
         try:
             with open(bots_file_path, 'r') as file:
@@ -268,28 +288,35 @@ class DockerManager:
             return jsonify({"error": str(e)}), 500
 
     def delete_bot(self, container_id):
-        if container_id in self.bots:
-            # bot_info = self.bots[service_id]
-
-            # 删除配置文件和目录
-            config_dir = os.path.join(get_config_dir(), container_id)
-            if os.path.exists(config_dir):
-                for root, dirs, files in os.walk(config_dir, topdown=False):
-                    for name in files:
-                        os.remove(os.path.join(root, name))
-                    for name in dirs:
-                        os.rmdir(os.path.join(root, name))
-                os.rmdir(config_dir)
-                print(f"Config directory {config_dir} removed successfully.")
-
-            # 从 bots.json 中删除记录
-            del self.bots[container_id]
-            self.save_bots()
-            print(f"Bot {container_id} deleted successfully.")
-            return True
-        else:
-            print(f"Bot with service_id {container_id} not found.")
-            return False
+        bots_file_path = os.path.join(get_data_dir(), 'bots.json')
+        try:
+            with open(bots_file_path, 'r') as file:
+                bots_data = json.load(file)
+                if container_id in bots_data:
+                    print(bots_data[container_id],'当前要删除的配置文件目录名为bots_data[container_id].service_id')
+                    # 删除配置文件和目录
+                    config_dir = os.path.join(get_config_dir(),bots_data[container_id]["service_id"])
+                    if os.path.exists(config_dir):
+                        for root, dirs, files in os.walk(config_dir, topdown=False):
+                            for name in files:
+                                os.remove(os.path.join(root, name))
+                            for name in dirs:
+                                os.rmdir(os.path.join(root, name))
+                        os.rmdir(config_dir)
+                        print(f"Config directory {config_dir} removed successfully.")
+                    self.del_bots(container_id)
+                    # 从 bots.json 中删除记录
+                    # del self.bots[container_id]
+                    # self.save_bots()
+                    print(f"Bot {container_id} deleted successfully.")
+                    return True
+                else:
+                    print(f"Bot with service_id {container_id} not found.")
+                    return False
+        except Exception as e:
+            print(f"Error loading bots.json: {e}")
+            return []
+        
         
     # def get_bot_config(self,bot_id):
     #     # print(self.bots.get(bot_id, {}))

@@ -13,11 +13,11 @@
           </el-col>
         </el-row>
         <!-- 数据加载中和错误处理 -->
-        <el-empty
+        <!-- <el-empty
           v-if="!loading && (!bots || bots.length === 0)"
           description="没有数据"
           class="custom-empty"
-        ></el-empty>
+        ></el-empty> -->
         <el-alert
           v-if="error"
           type="error"
@@ -29,7 +29,6 @@
         ></el-alert>
         <!-- 数据列表 -->
         <el-table
-          v-else
           :data="bots"
           class="custom-table"
           style="width: 100%; margin-top: 20px"
