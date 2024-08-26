@@ -128,7 +128,7 @@
 import { ref, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import request from "@/utils/request";
-import ConfigDialog from "/src/components/dialog.vue";
+import ConfigDialog from "@/components/Dialog.vue";
 const configDialogRef = ref(null);
 const bots = ref([]);
 const loading = ref(false);
