@@ -77,18 +77,7 @@ class DockerManager:
         
         return bots
 
-    # def save_bots(self):
-    #     # with open(self.bots_file, 'w') as file:
-    #     #     json.dump(self.bots, file, indent=4)
-    #     try:
-    #         with open(self.bots_file, 'w') as file:
-    #             fcntl.flock(file, fcntl.LOCK_EX)  # 排他锁，防止其他进程访问
-    #             json.dump(self.bots, file, indent=4)
-    #             logging.info(f"Saved bots to {self.bots_file} at {time.time()}")
-    #     except Exception as e:
-    #         logging.error(f"Failed to save bots to {self.bots_file} at {time.time()}: {e}")
-    #     finally:
-    #         fcntl.flock(file, fcntl.LOCK_UN)  # 解锁文件
+    
     def save_bots(self):
         """将当前的 bots 数据保存回 bots.json 文件"""
         try:
@@ -113,9 +102,10 @@ class DockerManager:
         elif action == "restart":
             container.restart()
         elif action == "remove":
+            self.delete_bot(container_id)
             container.stop()
             container.remove()
-            self.delete_bot(container_id)
+            
         return container.status
 
     def generate_config(self, service_id, config_data):
@@ -277,12 +267,12 @@ class DockerManager:
             print(f"Error: {str(e)}")
             return jsonify({"error": str(e)}), 500
 
-    def delete_bot(self, service_id):
-        if service_id in self.bots:
+    def delete_bot(self, container_id):
+        if container_id in self.bots:
             # bot_info = self.bots[service_id]
 
             # 删除配置文件和目录
-            config_dir = os.path.join(get_config_dir(), service_id)
+            config_dir = os.path.join(get_config_dir(), container_id)
             if os.path.exists(config_dir):
                 for root, dirs, files in os.walk(config_dir, topdown=False):
                     for name in files:
@@ -293,12 +283,12 @@ class DockerManager:
                 print(f"Config directory {config_dir} removed successfully.")
 
             # 从 bots.json 中删除记录
-            del self.bots[service_id]
+            del self.bots[container_id]
             self.save_bots()
-            print(f"Bot {service_id} deleted successfully.")
+            print(f"Bot {container_id} deleted successfully.")
             return True
         else:
-            print(f"Bot with service_id {service_id} not found.")
+            print(f"Bot with service_id {container_id} not found.")
             return False
         
     # def get_bot_config(self,bot_id):
