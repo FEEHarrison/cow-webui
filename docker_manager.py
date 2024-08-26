@@ -222,22 +222,47 @@ class DockerManager:
        
 
     def get_bot_list(self):
+        # bot_list = []
+        # for container_id,value in self.bots.items():
+        #     try:
+        #         container = self.client.containers.get(container_id)  # 使用完整容器 ID
+                
+        #         status = container.status
+        #     except docker.errors.NotFound:
+        #         status = "not found"
+          
+        #     bot_list.append({
+        #         "id": container_id,
+        #         "service_id":value['service_id'],
+        #         "name": value['name'],
+        #         "status": status,
+        #         "config":value['config']
+        #     })
+        # return bot_list
+        bots_file_path = os.path.join(get_data_dir(), 'bots.json')
+        try:
+            with open(bots_file_path, 'r') as file:
+                bots_data = json.load(file)
+        except Exception as e:
+            print(f"Error loading bots.json: {e}")
+            return []
+
         bot_list = []
-        for container_id,value in self.bots.items():
+        for container_id, value in bots_data.items():
             try:
                 container = self.client.containers.get(container_id)  # 使用完整容器 ID
-                
                 status = container.status
             except docker.errors.NotFound:
                 status = "not found"
-          
+
             bot_list.append({
                 "id": container_id,
-                "service_id":value['service_id'],
+                "service_id": value['service_id'],
                 "name": value['name'],
                 "status": status,
-                "config":value['config']
+                "config": value['config']
             })
+
         return bot_list
 
     def get_container_logs(self, container_id):

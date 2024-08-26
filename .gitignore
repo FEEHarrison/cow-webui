@@ -12,7 +12,8 @@ dist
 dist-ssr
 *.local
 nohup.out
-
+myvenv
+venv
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

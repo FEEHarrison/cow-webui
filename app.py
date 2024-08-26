@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from docker_manager import DockerManager
-import os
+# import os
 from flask_cors import CORS  # 添加 CORS 支持
 
 def make_response(code=200, success=True, data=None, message="操作成功"):
@@ -18,11 +18,6 @@ CORS(app)  # 启用 CORS
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
-# 配置静态文件目录
-# app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'static/qrcodes')
-# if not os.path.exists(app.config['UPLOAD_FOLDER']):
-#     os.makedirs(app.config['UPLOAD_FOLDER'])
-
 docker_manager = DockerManager()
 
 
@@ -32,15 +27,11 @@ def create_bot():
     data = docker_manager.start_docker_container(config_data)
     return make_response(data=data)
 
-@app.route('/api/containers', methods=['GET'])
-def get_containers():
-    container_count = docker_manager.get_running_containers()
-    return jsonify({"container_count": container_count})
 
-@app.route('/api/container/<container_id>/<action>', methods=['POST'])
-def manage_container(container_id, action):
-    status = docker_manager.manage_container(container_id, action)
-    return make_response(data={"status": status})
+# @app.route('/api/container/<container_id>/<action>', methods=['POST'])
+# def manage_container(container_id, action):
+#     status = docker_manager.manage_container(container_id, action)
+#     return make_response(data={"status": status})
 
 @app.route('/api/bots', methods=['GET'])
 def get_bots():
