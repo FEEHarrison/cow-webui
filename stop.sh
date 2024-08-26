@@ -2,17 +2,11 @@
 # 查找并杀死Python服务的进程
 
 # 定义要结束的进程关键字
-process_keyword="gunicorn -w 4 -b 0.0.0.0:5002 app:app"
+pkill -f "gunicorn --timeout 120 --log-level debug -w 4 -b 0.0.0.0:5002 app:app"
 
-# 使用 pgrep 找到符合条件的进程 ID
-pids=$(pgrep -f "$process_keyword")
-
-if [ -z "$pids" ]; then
-    echo "未找到符合条件的进程"
+# 检查是否成功终止进程
+if [ $? -eq 0 ]; then
+    echo "成功终止 gunicorn 进程"
 else
-    # 循环终止每个进程
-    for pid in $pids; do
-        echo "终止进程 $pid"
-        kill $pid
-    done
+    echo "未能终止 gunicorn 进程"
 fi
