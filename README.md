@@ -96,23 +96,25 @@ npm run dev
 ### 服务器启动前端
 #### 本地打包
 ```bash
+cd cow-webui-vite
 npm run build
 ```
 #### 将dist文件部署到服务器使用nginx代理
 ```bash
 #nginx vue
 location / {
+    root /your-path/cow-webui/cow-webui-vite/dist;
     try_files $uri $uri/ /index.html;
 }
 ```
 
 
-## 使用 Docker
+## 使用 Docker(后续支持)
 
 项目提供了 Docker 支持，使用以下命令启动：
 
 ```bash
-docker-compose -f configs/9b1df1ee/docker-compose.yml up --build
+暂无
 ```
 
 ## 项目配置
