@@ -8,25 +8,11 @@
         <el-row :gutter="20">
           <el-col :span="6">
             <el-button type="primary" @click="createBot" class="custom-button"
-              >创建新机器人</el-button
+              >创建wx机器人</el-button
             >
           </el-col>
         </el-row>
-        <!-- 数据加载中和错误处理 -->
-        <!-- <el-empty
-          v-if="!loading && (!bots || bots.length === 0)"
-          description="没有数据"
-          class="custom-empty"
-        ></el-empty> -->
-        <el-alert
-          v-if="error"
-          type="error"
-          title="数据加载失败"
-          description="请检查网络或稍后重试"
-          show-icon
-          closable
-          class="custom-alert"
-        ></el-alert>
+
         <!-- 数据列表 -->
         <el-table
           :data="bots"
@@ -53,12 +39,6 @@
           >
             <template v-slot="scope">
               <el-button @click="getLogs(scope.row.id)">获取日志</el-button>
-              <!-- <el-image
-                v-if="scope && scope.row && scope.row.qr_code_url"
-                :src="scope.row.qr_code_url"
-                class="qr-image"
-              ></el-image>
-              <span v-else>无二维码</span> -->
             </template>
           </el-table-column>
           <el-table-column
@@ -237,82 +217,4 @@ onMounted(() => {
 
 <style scoped>
 /* General Styles */
-h2 {
-  margin: 0;
-  padding: 20px;
-  font-size: 1.8em;
-  color: #2c3e50;
-  font-weight: bold;
-}
-.dialogStyle {
-  .el-dialog__body {
-    min-height: 200px;
-  }
-}
-.el-header {
-  /* background-color: #f0f3f4;
-  border-bottom: 2px solid #e0e4e5; */
-}
-
-.el-main {
-  background-color: #ffffff;
-  padding: 20px;
-}
-
-.bot-management-console {
-  font-family: "Helvetica Neue", Arial, sans-serif;
-  color: #34495e;
-}
-
-.custom-button {
-  background-color: #007bff;
-  border-color: #007bff;
-  font-weight: 500;
-}
-
-.custom-button:hover {
-  background-color: #0056b3;
-  border-color: #004085;
-}
-
-.custom-empty {
-  color: #95a5a6;
-}
-
-.custom-alert {
-  margin-bottom: 20px;
-}
-
-.custom-table {
-  border-radius: 8px;
-  border: 1px solid #ecf0f1;
-}
-
-.custom-column {
-  text-align: center;
-}
-
-.qr-image {
-  width: 100px;
-  height: 100px;
-  border-radius: 8px;
-}
-
-.status-tag {
-  font-weight: bold;
-}
-
-.action-button {
-  margin: 0 5px;
-}
-
-.action-button.primary {
-  background-color: #007bff;
-  border-color: #007bff;
-}
-
-.action-button.danger {
-  background-color: #e74c3c;
-  border-color: #c0392b;
-}
 </style>

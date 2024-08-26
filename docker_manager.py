@@ -22,7 +22,6 @@ class DockerManager:
         # 生成或更新配置文件
         
         config_path = self.generate_config(service_id, config_data)
-        print(config_path,'config_path')
         # 生成Docker Compose文件
         compose_file_path = self.generate_docker_compose_file(service_id, config_path)
         
@@ -293,7 +292,6 @@ class DockerManager:
             with open(bots_file_path, 'r') as file:
                 bots_data = json.load(file)
                 if container_id in bots_data:
-                    print(bots_data[container_id],'当前要删除的配置文件目录名为bots_data[container_id].service_id')
                     # 删除配置文件和目录
                     config_dir = os.path.join(get_config_dir(),bots_data[container_id]["service_id"])
                     if os.path.exists(config_dir):

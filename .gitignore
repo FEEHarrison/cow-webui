@@ -9,6 +9,8 @@ lerna-debug.log*
 configs
 node_modules
 dist
+cow-webui-vite/.vscode/*
+cow-webui-vite/dist
 dist-ssr
 *.local
 nohup.out
@@ -17,8 +19,8 @@ venv
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+cow-webui-vite/.idea
+cow-webui-vite/.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
