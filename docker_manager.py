@@ -3,71 +3,19 @@ import json
 import docker
 import subprocess
 from config import get_config_dir, get_template_dir,get_data_dir
-import requests
 import re
-from pyqrcode import QRCode
-import io
 import uuid
-import time
 from datetime import datetime, timedelta
-from flask import jsonify,Response
-
-def get_wechat_uuid():
-    """从微信服务器获取登录UUID"""
-    url = 'https://login.weixin.qq.com/jslogin'
-    params = {
-        'appid': 'wx782c26e4c19acffb',
-        'fun': 'new',
-        'redirect_uri': 'https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxnewloginpage?mod=desktop',
-        'lang': 'zh_CN'
-    }
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
-    response = requests.get(url, params=params, headers=headers)
-    
-    # 使用正则表达式提取uuid
-    match = re.search(r'window.QRLogin.code = (\d+); window.QRLogin.uuid = "(\S+?)";', response.text)
-    if match and match.group(1) == '200':
-        uuid = match.group(2)
-        return uuid
-    else:
-        raise Exception("无法从微信服务器获取UUID")
-def generate_qr_code():
-    """使用UUID生成微信登录二维码"""
-    uuid = get_wechat_uuid()
-    qr_url = f'https://login.weixin.qq.com/l/{uuid}'
-    qr_code = QRCode(qr_url)
-    qr_storage = io.BytesIO()
-    qr_code.png(qr_storage, scale=10)
-    qr_storage.seek(0)
-    return qr_storage
-
-def save_qr_code(filename=None):
-    """将二维码保存到 static/qrcodes 文件夹"""
-    # 确保 static/qrcodes 文件夹存在
-    # qr_folder = os.path.join(os.getcwd(), 'static/qrcodes')
-    # if not os.path.exists(qr_folder):
-    #     os.makedirs(qr_folder)
-    # uuid_str = str(uuid.uuid4())
-    # # 默认文件名为 uuid.png
-    # if filename is None:
-    #     filename = f'{uuid_str}.png'
-    
-    # # 构建完整的文件路径
-    # file_path = os.path.join(qr_folder, filename)
-    
-    # # 生成二维码并保存到文件
-    # qr_storage = generate_qr_code()
-    # with open(file_path, 'wb') as f:
-    #     f.write(qr_storage.getvalue())
-    
-    # print(f"二维码已保存到: {file_path}")
-    # return file_path
+from flask import jsonify
+import fcntl
+import logging
+import time
 
 class DockerManager:
     def __init__(self):
         self.client = docker.from_env()
         self.bots_file = os.path.join(get_data_dir(), "bots.json")
-        self.load_bots()
+        self.bots=self.load_bots()
 
     def process_config_and_generate_compose(self, service_id, config_data):
         """处理配置并生成 Docker Compose 文件"""
@@ -106,18 +54,51 @@ class DockerManager:
         return compose_file_path
     
     def load_bots(self):
+        bots = {}
         if os.path.exists(self.bots_file):
-            if os.path.getsize(self.bots_file) > 0:  # 检查文件是否为空
-                with open(self.bots_file, 'r') as file:
-                    self.bots = json.load(file)
-            else:
-                self.bots = {}  # 文件为空时，初始化为一个空字典
+            with open(self.bots_file, 'r') as file:
+                fcntl.flock(file, fcntl.LOCK_SH)  # 共享锁，防止文件同时被写入
+                try:
+                    if os.path.getsize(self.bots_file) > 0:
+                        try:
+                            bots = json.load(file)
+                            logging.info(f"Loaded bots from {self.bots_file} at {time.time()}: {bots}")
+                        except json.JSONDecodeError:
+                            logging.error(f"Failed to decode JSON from {self.bots_file} at {time.time()}")
+                            bots = {}
+                    else:
+                        logging.warning(f"Bots file {self.bots_file} is empty at {time.time()}, initializing empty bots")
+                        bots = {}
+                finally:
+                    fcntl.flock(file, fcntl.LOCK_UN)  # 解锁文件
         else:
-            self.bots = {}
+            logging.warning(f"Bots file {self.bots_file} does not exist at {time.time()}, initializing empty bots")
+            bots = {}
+        
+        return bots
 
+    # def save_bots(self):
+    #     # with open(self.bots_file, 'w') as file:
+    #     #     json.dump(self.bots, file, indent=4)
+    #     try:
+    #         with open(self.bots_file, 'w') as file:
+    #             fcntl.flock(file, fcntl.LOCK_EX)  # 排他锁，防止其他进程访问
+    #             json.dump(self.bots, file, indent=4)
+    #             logging.info(f"Saved bots to {self.bots_file} at {time.time()}")
+    #     except Exception as e:
+    #         logging.error(f"Failed to save bots to {self.bots_file} at {time.time()}: {e}")
+    #     finally:
+    #         fcntl.flock(file, fcntl.LOCK_UN)  # 解锁文件
     def save_bots(self):
-        with open(self.bots_file, 'w') as file:
-            json.dump(self.bots, file, indent=4)
+        """将当前的 bots 数据保存回 bots.json 文件"""
+        try:
+            with open(self.bots_file, 'w') as file:
+                fcntl.flock(file, fcntl.LOCK_EX)  # 排他锁，防止其他进程访问
+                json.dump(self.bots, file, indent=4)
+                logging.info(f"Saved bots to {self.bots_file} at {time.time()}")
+                fcntl.flock(file, fcntl.LOCK_UN)  # 在文件关闭前解锁文件
+        except Exception as e:
+            logging.error(f"Failed to save bots to {self.bots_file} at {time.time()}: {e}")
 
     def generate_uuid(self):
 
@@ -194,28 +175,27 @@ class DockerManager:
 
         # 使用通用方法处理配置并生成 Compose 文件
         compose_file_path,config_path = self.process_config_and_generate_compose(service_id, config_data)
-        print(compose_file_path,'compose_file_path')
+        # print(compose_file_path,'compose_file_path')
         # 启动容器
         try:
             subprocess.run(['docker-compose', '-f', compose_file_path, 'up', '-d'], check=True)
             container_name = config_data.get("CONTAINER_NAME", service_id)
             container = self.client.containers.get(container_name)
-            container_id = container.id
-            # logs_response = self.get_container_logs(container_id)
-            # log_data = logs_response.json.get('data', []) if logs_response.status_code == 200 else []
+            container_id = container.id[:12]
+           
             with open(config_path, 'r', encoding='utf-8') as config_file:
                 current_config = json.load(config_file)
             body = {
                 "name": config_data.get("bot_name", "default_bot"),
                 "config": current_config,
                 # "logs": log_data,
-                "container_id": container_id[:12],
+                "container_id": container_id,
                 "service_id": service_id
             }
-            self.bots[service_id] = body
+            self.bots[container_id] = body
             self.save_bots()
 
-            return self.bots[service_id]
+            return self.bots[container_id]
         except Exception as e:
             print(f"Failed to start container: {e}")
             return {}

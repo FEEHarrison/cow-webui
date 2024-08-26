@@ -27,12 +27,6 @@ def create_bot():
     data = docker_manager.start_docker_container(config_data)
     return make_response(data=data)
 
-
-# @app.route('/api/container/<container_id>/<action>', methods=['POST'])
-# def manage_container(container_id, action):
-#     status = docker_manager.manage_container(container_id, action)
-#     return make_response(data={"status": status})
-
 @app.route('/api/bots', methods=['GET'])
 def get_bots():
     bot_list = docker_manager.get_bot_list()

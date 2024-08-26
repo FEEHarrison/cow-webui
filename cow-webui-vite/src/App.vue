@@ -138,8 +138,8 @@ const qrCodeUrl = ref(""); // 存储二维码URL
 
 const showConfigDialog = async (row) => {
   if (configDialogRef.value) {
-    const response = await request.get(`/api/get_bot_config/${row.id}`);
-    configDialogRef.value.openConfigDialog(response.data || {}, row.id);
+    const response = await request.get(`/api/get_bot_config/${row.service_id}`);
+    configDialogRef.value.openConfigDialog(response.data || {}, row.service_id);
   }
 };
 const getLogs = async (id) => {
