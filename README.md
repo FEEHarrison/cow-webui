@@ -48,18 +48,18 @@ my-cow/
 
 请确保已安装 Python 3.8 或更高版本。使用以下命令安装 Python 依赖项：
 
-\```bash
+```bash
 pip install -r requirements.txt
-\```
+```
 
 ### 前端依赖
 
 请确保已安装 Node.js 及 npm。使用以下命令安装前端依赖项：
 
-\```bash
+```bash
 cd cow-webui-vite
 npm install
-\```
+```
 
 ## 启动应用程序
 
@@ -71,10 +71,20 @@ python app.py
 ### 服务器启动后端
 
 ```bash
+方式1 （推荐）
+chmod +x start.sh
+./start.sh
+
+chmod +x stop.sh
+./stop.sh
+
+方式2 （flask后端服务，启动不稳定，不推荐）
 nohup python3 app.py & tail -f nohup.out //启动服务
 ps -ef | grep app.py | grep -v grep //命令可查看运行于后台的进程
 kill 进程id //关闭进程
 tail -f nohup.out //查看日志
+
+
 ```
 
 ### 启动前端
