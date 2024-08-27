@@ -30,3 +30,4 @@ cow-webui-vite/.DS_Store
 *.sln
 *.sw?
 .DS_Store
+__pycache__
