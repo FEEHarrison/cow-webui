@@ -1,3 +1,13 @@
+# 前端部分
+cow-webui-vite/dist
+cow-webui-vite/.vscode/*
+cow-webui-vite/.idea
+cow-webui-vite/.DS_Store
+cow-webui-vite/.DS_Store
+.idea
+.vscode/*
+# cow-webui-vite/.env.production
+# templates/config-template.json
 # Logs
 logs
 *.log
@@ -12,18 +22,16 @@ dist
 data/bots.json
 .env.production
 config-template.json
-cow-webui-vite/.vscode/*
-cow-webui-vite/dist
+
 dist-ssr
 *.local
 nohup.out
 myvenv
 venv
 # Editor directories and files
-.vscode/*
+
 !.vscode/extensions.json
-cow-webui-vite/.idea
-cow-webui-vite/.DS_Store
+
 *.suo
 *.ntvs*
 *.njsproj
