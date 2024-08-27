@@ -9,6 +9,7 @@ lerna-debug.log*
 configs
 node_modules
 dist
+data/bots.json
 .env.production
 config-template.json
 cow-webui-vite/.vscode/*
@@ -28,3 +29,4 @@ cow-webui-vite/.DS_Store
 *.njsproj
 *.sln
 *.sw?
+.DS_Store

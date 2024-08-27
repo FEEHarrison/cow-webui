@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
 from docker_manager import DockerManager
-# import os
+import os
 from flask_cors import CORS  # 添加 CORS 支持
+# from flask_socketio import SocketIO, send
 
 def make_response(code=200, success=True, data=None, message="操作成功"):
     """统一的响应格式"""
@@ -13,6 +14,8 @@ def make_response(code=200, success=True, data=None, message="操作成功"):
     })
 
 app = Flask(__name__)
+# socketio = SocketIO(app)
+
 CORS(app)  # 启用 CORS
 # Disable caching for streamed responses
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -57,10 +60,12 @@ def save_bot_config(bot_id):
     new_config = request.json
     try:
         # 复用通用配置处理逻辑
-        docker_manager.process_config_and_generate_compose(bot_id, new_config)
-        return make_response(message="配置部分更新并生成新的 Compose 文件成功")
+        # docker_manager.process_config_and_generate_compose(bot_id, new_config)
+        data=docker_manager.save_config(bot_id,new_config)
+        return make_response(data=data,message="配置部分更新并生成新的 Compose 文件成功")
     except Exception as e:
         return make_response(code=500, success=False, message=str(e))
+    
 
 @app.route('/api/get_bot_config/<bot_id>', methods=['GET'])
 def get_bot_config(bot_id):

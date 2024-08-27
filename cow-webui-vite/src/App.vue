@@ -117,7 +117,7 @@ const qrCodeUrl = ref(""); // 存储二维码URL
 const showConfigDialog = async (row) => {
   if (configDialogRef.value) {
     const response = await request.get(`/api/get_bot_config/${row.service_id}`);
-    configDialogRef.value.openConfigDialog(response.data || {}, row.service_id);
+    configDialogRef.value.openConfigDialog(response.data || {}, row);
   }
 };
 const getLogs = async (id) => {
@@ -140,7 +140,6 @@ const fetchBots = async () => {
     const response = await request.get("/api/bots");
     if (response.success && response.code === 200) {
       bots.value = response.data || [];
-      console.log(bots.value, "bots.value");
     } else {
       throw new Error(response.message || "获取机器人列表失败");
     }

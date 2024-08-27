@@ -93,8 +93,9 @@ const dialogVisible = ref(false);
 const config = ref({});
 const botId = ref(null);
 const { loading, withLoading } = useLoading();
+const containerId = ref(null);
 
-const openConfigDialog = async (data, id) => {
+const openConfigDialog = async (data, row) => {
   dialogVisible.value = true;
   const new_config = data || {};
   console.log(new_config, new_config?.GROUP_NAME_WHITE_LIST);
@@ -108,7 +109,8 @@ const openConfigDialog = async (data, id) => {
     GROUP_NAME_WHITE_LIST: (new_config?.GROUP_NAME_WHITE_LIST || [])?.join(","),
   };
   // botId.value = data.service_id;
-  botId.value = id;
+  botId.value = row.service_id;
+  containerId = row.container_id;
 };
 
 const saveConfig = async () => {
