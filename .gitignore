@@ -1,12 +1,25 @@
 # 前端部分
-cow-webui-vite/dist
-cow-webui-vite/.vscode/*
-cow-webui-vite/.idea
+# 忽略 cow-webui-vite/dist 目录
+cow-webui-vite/dist/
+
+# 忽略 .vscode 目录下的所有内容
+cow-webui-vite/.vscode/
+
+# 忽略 .idea 目录下的所有内容
+cow-webui-vite/.idea/
+
+# 忽略 .DS_Store 文件
 cow-webui-vite/.DS_Store
-cow-webui-vite/.DS_Store
+
+# 忽略 node_modules 目录下的所有内容
+cow-webui-vite/node_modules/
+
+# 忽略 .env.production 文件
+cow-webui-vite/.env.production
+
+
 .idea
 .vscode/*
-cow-webui-vite/.env.production
 templates/config-template.json
 # Logs
 logs
