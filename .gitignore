@@ -6,8 +6,8 @@ cow-webui-vite/.DS_Store
 cow-webui-vite/.DS_Store
 .idea
 .vscode/*
-# cow-webui-vite/.env.production
-# templates/config-template.json
+cow-webui-vite/.env.production
+templates/config-template.json
 # Logs
 logs
 *.log
