@@ -94,12 +94,6 @@ tail -f nohup.out //查看日志
 
 ```
 
-### 启动前端
-
-```bash
-cd cow-webui-vite
-npm run dev
-```
 ### 服务器启动前端
 #### 本地打包
 ```bash
