@@ -7,7 +7,10 @@
       <el-main>
         <el-row :gutter="20">
           <el-col :span="6">
-            <el-button type="primary" @click="createBot" class="custom-button"
+            <el-button
+              type="primary"
+              @click="showConfigDialog"
+              class="custom-button"
               >创建wx机器人</el-button
             >
           </el-col>
@@ -94,7 +97,12 @@
           <img v-if="qrCodeUrl" :src="qrCodeUrl" class="qr-image" />
           <span v-else>无二维码</span>
         </el-dialog>
-        <ConfigDialog ref="configDialogRef" />
+        <ConfigDialog
+          ref="configDialogRef"
+          :createBot="createBot"
+          :fetchBots="fetchBots"
+        />
+
         <!-- 数据加载中的指示器 -->
         <el-loading :fullscreen="loading" v-if="loading"></el-loading>
       </el-main>
@@ -115,11 +123,34 @@ const dialogVisible = ref(false); // 控制弹窗显示与隐藏
 const qrCodeUrl = ref(""); // 存储二维码URL
 
 const showConfigDialog = async (row) => {
-  if (configDialogRef.value) {
-    const response = await request.get(`/api/get_bot_config/${row.service_id}`);
-    configDialogRef.value.openConfigDialog(response.data || {}, row);
+  if (row.id) {
+    if (configDialogRef.value) {
+      const response = await request.get(
+        `/api/get_bot_config/${row.service_id}`
+      );
+      configDialogRef.value.openConfigDialog(response.data || {}, row);
+    }
+  } else {
+    configDialogRef.value.openConfigDialog({});
   }
 };
+const createBot = async (config) => {
+  try {
+    const response = await request.post("/api/create_bot", {
+      ...config,
+    });
+    if (response.success && response.code === 200) {
+      ElMessage.success("机器人创建成功");
+      configDialogRef.value.closeDialog();
+      fetchBots();
+    } else {
+      throw new Error(response.message || "机器人创建失败");
+    }
+  } catch (err) {
+    ElMessage.error(err.message);
+  }
+};
+
 const getLogs = async (id) => {
   const response = await request.get(`/api/logs/${id}`);
   if (response.success && response.code === 200) {
@@ -139,7 +170,11 @@ const fetchBots = async () => {
   try {
     const response = await request.get("/api/bots");
     if (response.success && response.code === 200) {
-      bots.value = response.data || [];
+      bots.value =
+        response.data.map((item) => ({
+          ...item,
+          bot_name: item.config.BOT_NAME,
+        })) || [];
     } else {
       throw new Error(response.message || "获取机器人列表失败");
     }
@@ -151,22 +186,6 @@ const fetchBots = async () => {
   }
 };
 
-const createBot = async () => {
-  try {
-    const response = await request.post("/api/create_bot", {
-      // bot_type: "CHATGPT",
-      // bot_name: "bot",
-    });
-    if (response.success && response.code === 200) {
-      ElMessage.success("机器人创建成功");
-      fetchBots();
-    } else {
-      throw new Error(response.message || "机器人创建失败");
-    }
-  } catch (err) {
-    ElMessage.error(err.message);
-  }
-};
 const restartBot = async (id) => {
   try {
     const response = await request.post(`/api/restart_bot/${id}`);

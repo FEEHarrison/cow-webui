@@ -16,11 +16,31 @@ class DockerManager:
         self.client = docker.from_env()
         self.bots_file = os.path.join(get_data_dir(), "bots.json")
         self.bots=self.load_bots()
-    
+    def get_container_id(self,data,target_value):
+        for key, value in data.items():
+            if isinstance(value, dict) and value.get('service_id') == target_value:
+                return key
+        return None
     def process_config_and_generate_compose(self, service_id, config_data):
         """处理配置并生成 Docker Compose 文件"""
         # 生成或更新配置文件
-        
+        bots_file_path = os.path.join(get_data_dir(), 'bots.json')
+        with open(bots_file_path, 'r') as file:
+            bots_data = json.load(file)
+        container_id=self.get_container_id(bots_data,service_id)
+  
+        try:
+            if container_id in bots_data:
+                bots_data[container_id]["name"] = config_data["BOT_NAME"]
+                with open(bots_file_path, 'w') as file:
+                    json.dump(bots_data, file, indent=4)
+        except KeyError as e:
+            print(f"KeyError: {e} - Check if all required keys are present in your data.")
+        except IOError as e:
+            print(f"IOError: {e} - Check file path and permissions.")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+
         config_path = self.generate_config(service_id, config_data)
         # 生成Docker Compose文件
         compose_file_path = self.generate_docker_compose_file(service_id, config_path)
@@ -30,7 +50,6 @@ class DockerManager:
     def generate_config(self, service_id, config_data):
         template_path = os.path.join(get_template_dir(), "config-template.json")
         with open(template_path, 'r') as template_file:
-            # config_template = template_file.read()
             config_template = json.load(template_file)
 
         config_template = {key.upper(): value for key, value in config_template.items()}
@@ -38,6 +57,7 @@ class DockerManager:
         config_template= json.dumps(config_template, indent=4,ensure_ascii=False)
 
         replacements = {
+            # "BOT_NAME":config_data.get("BOT_NAME", "default_bot"),
             "CONVERSATION_MAX_TOKENS": int(config_data.get("CONVERSATION_MAX_TOKENS", 1000)),
             "SPEECH_RECOGNITION": config_data.get("SPEECH_RECOGNITION", "False"),
             "CHARACTER_DESC": config_data.get("CHARACTER_DESC", "You are an AI assistant."),
@@ -126,34 +146,7 @@ class DockerManager:
 
         return str(uuid.uuid4())[:8]
    
-    # def restart_bots(self,container_id):
-    #     bots_file_path = os.path.join(get_data_dir(), 'bots.json')
-    #     with open(bots_file_path, 'r') as file:
-    #         bots_data = json.load(file) 
-        
-    #     if container_id in bots_data:
-    #         service_id=bots_data[container_id]["service_id"]
-    #         config_dir = os.path.join(get_config_dir(), service_id)
-    #         compose_file_path=os.path.join(config_dir, 'docker-compose.yml')
-    #         subprocess.run(['docker-compose', '-f', compose_file_path, 'up', '-d'], check=True)
-            
-    #     containers = self.client.containers.list()
-    #     if containers:
-    #         latest_container = containers[-1]  # 获取最新创建的容器
-    #         new_container_id = latest_container.id[:12]
-    #         if service_id in bots_data:
-    #             # 替换的新键值
-    #             new_key = new_container_id
-
-    #             # 映射新的键值，并保留原始键值对
-    #             bots_data[new_key] = bots_data.pop(container_id)
-    #         else:
-    #             return '找不到对应的bots对象'
-    #     else:
-    #         return "找不到容器list"
-        
-    #     with open(bots_file_path, 'w') as file:
-    #         json.dump(bots_data, file, indent=4)
+    
     def restart_bots(self, container_id):
         bots_file_path = os.path.join(get_data_dir(), 'bots.json')
         with open(bots_file_path, 'r') as file:
@@ -269,7 +262,7 @@ class DockerManager:
             with open(config_path, 'r', encoding='utf-8') as config_file:
                 current_config = json.load(config_file)
             body = {
-                "name": config_data.get("bot_name", "default_bot"),
+                "name": config_data.get("BOT_NAME", "default_bot"),
                 "config": current_config,
                 # "logs": log_data,
                 "container_id": container_id,

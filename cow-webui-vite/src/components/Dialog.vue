@@ -1,11 +1,17 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="编辑配置"
+    :title="containerId ? '编辑配置' : '创建机器人'"
     width="50%"
     @close="closeDialog"
   >
     <el-form :model="config" label-width="150px">
+      <el-form-item label="机器人名称">
+        <el-input
+          v-model="config.BOT_NAME"
+          placeholder="输入机器人名称"
+        ></el-input>
+      </el-form-item>
       <el-form-item label="模型">
         <el-select v-model="config.MODEL" placeholder="请选择模型">
           <el-option label="GPT-4o" value="gpt-4o"></el-option>
@@ -25,11 +31,6 @@
           v-model="config.SINGLE_CHAT_PREFIX"
           placeholder="输入以逗号分隔的前缀"
         ></el-input>
-        <!-- <el-input
-          v-for="(item, index) in ['xiazhus', 'dafsg']"
-          :key="index"
-          v-model="config.SINGLE_CHAT_PREFIX[index]"
-        ></el-input> -->
       </el-form-item>
       <el-form-item label="单聊回复前缀">
         <el-input
@@ -75,56 +76,75 @@
       </el-form-item>
 
       <el-form-item>
-        <el-button type="primary" @click="saveConfig">保存配置</el-button>
+        <el-button type="primary" @click="saveConfig">{{
+          containerId ? "保存配置" : "创建"
+        }}</el-button>
         <el-button @click="closeDialog">取消</el-button>
       </el-form-item>
     </el-form>
-    <ElLoading :fullscreen="loading" v-if="loading"></ElLoading>
   </el-dialog>
 </template>
 
 <script setup>
 import { ref } from "vue";
-import { useLoading } from "@/hooks/useLoading.js";
+// import { useLoading } from "@/hooks/useLoading.js";
 import { ElMessage } from "element-plus";
 import request from "@/utils/request";
+import { defineProps } from "vue";
 
+// 使用 defineProps 定义传递给子组件的方法
+const props = defineProps({
+  createBot: {
+    type: Function,
+    required: false,
+  },
+  fetchBots: {
+    type: Function,
+    required: false,
+  },
+});
 const dialogVisible = ref(false);
 const config = ref({});
 const botId = ref(null);
-const { loading, withLoading } = useLoading();
+// const { loading, withLoading } = useLoading();
 const containerId = ref(null);
 
 const openConfigDialog = async (data, row) => {
   dialogVisible.value = true;
   const new_config = data || {};
-  console.log(new_config, new_config?.GROUP_NAME_WHITE_LIST);
-  config.value = {
-    ...new_config,
-    SINGLE_CHAT_PREFIX: (new_config?.SINGLE_CHAT_PREFIX || [])?.join(","),
-    SINGLE_CHAT_REPLY_PREFIX: (
-      new_config?.SINGLE_CHAT_REPLY_PREFIX || []
-    )?.join(","),
-    GROUP_CHAT_PREFIX: (new_config?.GROUP_CHAT_PREFIX || [])?.join(","),
-    GROUP_NAME_WHITE_LIST: (new_config?.GROUP_NAME_WHITE_LIST || [])?.join(","),
-  };
-  // botId.value = data.service_id;
-  botId.value = row.service_id;
-  containerId = row.container_id;
+  console.log(row, "row");
+  if (row) {
+    config.value = {
+      ...new_config,
+      SINGLE_CHAT_PREFIX: (new_config?.SINGLE_CHAT_PREFIX || [])?.join(","),
+      SINGLE_CHAT_REPLY_PREFIX: (
+        new_config?.SINGLE_CHAT_REPLY_PREFIX || []
+      )?.join(","),
+      GROUP_CHAT_PREFIX: (new_config?.GROUP_CHAT_PREFIX || [])?.join(","),
+      GROUP_NAME_WHITE_LIST: (new_config?.GROUP_NAME_WHITE_LIST || [])?.join(
+        ","
+      ),
+    };
+    botId.value = row.service_id;
+    containerId.value = row.id;
+  } else {
+    containerId.value = "";
+    config.value = {};
+  }
+  // console.log(row, containerId.value, "containerId.value");
 };
 
 const saveConfig = async () => {
-  const body = {
-    ...config.value,
-    SINGLE_CHAT_PREFIX: config?.value?.SINGLE_CHAT_PREFIX?.split(/[，,]/),
-    SINGLE_CHAT_REPLY_PREFIX:
-      config?.value?.SINGLE_CHAT_REPLY_PREFIX?.split(/[，,]/),
-    GROUP_CHAT_PREFIX: config?.value?.GROUP_CHAT_PREFIX?.split(/[，,]/),
-    GROUP_NAME_WHITE_LIST: config?.value?.GROUP_NAME_WHITE_LIST?.split(/[，,]/),
-  };
-
-  await withLoading(async () => {
-    // console.log(body, "body");
+  if (containerId.value) {
+    const body = {
+      ...config.value,
+      SINGLE_CHAT_PREFIX: config?.value?.SINGLE_CHAT_PREFIX?.split(/[，,]/),
+      SINGLE_CHAT_REPLY_PREFIX:
+        config?.value?.SINGLE_CHAT_REPLY_PREFIX?.split(/[，,]/),
+      GROUP_CHAT_PREFIX: config?.value?.GROUP_CHAT_PREFIX?.split(/[，,]/),
+      GROUP_NAME_WHITE_LIST:
+        config?.value?.GROUP_NAME_WHITE_LIST?.split(/[，,]/),
+    };
     try {
       const response = await request.post(
         `/api/save_bot_config/${botId.value}`,
@@ -132,6 +152,9 @@ const saveConfig = async () => {
       );
       if (response.success && response.code === 200) {
         ElMessage.success("配置保存成功");
+        if (props.fetchBots) {
+          props.fetchBots();
+        }
         dialogVisible.value = false;
       } else {
         throw new Error(response.message || "保存配置失败");
@@ -139,7 +162,12 @@ const saveConfig = async () => {
     } catch (err) {
       ElMessage.error(err.message);
     }
-  });
+  } else {
+    console.log(11111, props);
+    if (props.createBot) {
+      props.createBot(config.value);
+    }
+  }
 };
 
 const closeDialog = () => {
@@ -147,6 +175,7 @@ const closeDialog = () => {
 };
 defineExpose({
   openConfigDialog,
+  closeDialog,
 });
 </script>
 

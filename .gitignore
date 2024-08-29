@@ -17,6 +17,7 @@ cow-webui-vite/node_modules/
 # 忽略 .env.production 文件
 cow-webui-vite/.env.production
 
+nuxt-ui-pro-landing/*
 
 .idea
 .vscode/*
