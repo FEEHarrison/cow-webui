@@ -21,7 +21,7 @@ nuxt-ui-pro-landing/
 
 .idea
 .vscode/*
-templates/config-template.json
+# templates/config-template.json
 # Logs
 logs
 *.log
