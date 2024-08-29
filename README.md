@@ -95,7 +95,7 @@ tail -f nohup.out //查看日志
 ```
 
 ### 服务器启动前端
-#### 本地打包
+#### 打包
 ```bash
 cd cow-webui-vite
 npm run build
