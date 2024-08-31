@@ -15,7 +15,6 @@ cow-webui-vite/.DS_Store
 cow-webui-vite/node_modules/
 
 # 忽略 .env.production 文件
-cow-webui-vite/.env.production
 
 nuxt-ui-pro-landing/
 .venv
@@ -30,12 +29,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-configs
 node_modules
 dist
-data/bots.json
-.env.production
-config-template.json
 
 dist-ssr
 *.local
