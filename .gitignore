@@ -18,7 +18,7 @@ cow-webui-vite/node_modules/
 cow-webui-vite/.env.production
 
 nuxt-ui-pro-landing/
-
+.venv
 .idea
 .vscode/*
 # templates/config-template.json

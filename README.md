@@ -73,6 +73,7 @@ python app.py
 ```bash
 cd cow-webui-vite
 npm run dev
+#配置.env.devlopment
 ```
 
 ### 服务器启动后端
@@ -80,17 +81,20 @@ npm run dev
 ```bash
 方式1 （推荐）
 chmod +x start.sh
-./start.sh
+./start.sh //启动服务
 
-chmod +x stop.sh
-./stop.sh
+tail -f access.log //查看运行日志
+tail -f error.log //查看错误日志
+
+chmod +x stop.sh 
+./stop.sh //关闭服务
+
 
 方式2 （flask后端服务，启动不稳定，不推荐）
 nohup python3 app.py & tail -f nohup.out //启动服务
 ps -ef | grep app.py | grep -v grep //命令可查看运行于后台的进程
 kill 进程id //关闭进程
 tail -f nohup.out //查看日志
-
 
 ```
 
@@ -99,6 +103,10 @@ tail -f nohup.out //查看日志
 ```bash
 cd cow-webui-vite
 npm run build
+
+3touch .env.production
+配置.env.production
+VITE_BASE_API=http://your-domain.com/
 ```
 #### 将dist文件部署到服务器使用nginx代理
 ```bash
@@ -115,8 +123,11 @@ location / {
 项目提供了 Docker 支持，使用以下命令启动：
 
 ```bash
-暂无
+注意本项目是使用接口操作docker实现的，所以服务器需要先安装docker
 ```
+
+## QA
+1.第一次启动项目可以稍等几分钟，需要等服务拉取容器镜像成功后才可以正常操作，相当于初始化过程。
 
 ## 项目配置
 
@@ -126,6 +137,9 @@ location / {
 
 如果您想为项目做出贡献，请 fork 本项目，创建您的分支，进行修改后提交 pull request。
 
-## 许可证
 
-该项目使用 MIT 许可证，详情请参阅 LICENSE 文件。
+## 赞助我一杯咖啡 ☕️
+
+如果你喜欢我的工作，可以通过wxpay
+
+来赞助我一杯咖啡。

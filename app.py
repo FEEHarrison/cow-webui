@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
 from docker_manager import DockerManager
-import os
+# import os
+# import sqlite3
 from flask_cors import CORS  # 添加 CORS 支持
+# import jwt
 # from flask_socketio import SocketIO, send
 
 def make_response(code=200, success=True, data=None, message="操作成功"):
@@ -60,7 +62,6 @@ def save_bot_config(bot_id):
     new_config = request.json
     try:
         # 复用通用配置处理逻辑
-        # docker_manager.process_config_and_generate_compose(bot_id, new_config)
         data=docker_manager.save_config(bot_id,new_config)
         return make_response(data=data,message="配置部分更新并生成新的 Compose 文件成功")
     except Exception as e:
