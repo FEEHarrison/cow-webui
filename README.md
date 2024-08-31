@@ -104,8 +104,7 @@ tail -f nohup.out //查看日志
 cd cow-webui-vite
 npm run build
 
-3touch .env.production
-配置.env.production
+touch .env.production //前端目录创建配置文件并配置.env.production，如下
 VITE_BASE_API=http://your-domain.com/
 ```
 #### 将dist文件部署到服务器使用nginx代理
@@ -131,11 +130,11 @@ location / {
 
 ## 项目配置
 
-配置文件位于 `configs/` 目录下，您可以根据需要编辑 `config.json` 和 `docker-compose.yml` 文件。
+配置文件位于 `templates/` 目录下，您可以根据需要编辑 `config.json` 和 `docker-compose.yml` 模版文件。
 
 ## 贡献
 
-如果您想为项目做出贡献，请 fork 本项目，创建您的分支，进行修改后提交 pull request。
+个人能力有限，如果您想为项目做出贡献，请 fork 本项目，创建您的分支，进行修改后提交 pull request，非常期待您的贡献。
 
 
 ## 赞助我一杯咖啡 ☕️
