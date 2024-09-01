@@ -76,10 +76,15 @@
       </el-form-item>
 
       <el-form-item>
-        <el-button type="primary" @click="saveConfig">{{
-          containerId ? "保存配置" : "创建"
-        }}</el-button>
-        <el-button @click="closeDialog">取消</el-button>
+        <el-button
+          type="primary"
+          @click="saveConfig"
+          :loading="loading"
+          :disabled="loading"
+        >
+          {{ containerId ? "保存配置" : "创建" }}
+        </el-button>
+        <el-button @click="closeDialog" :disabled="loading">取消</el-button>
       </el-form-item>
     </el-form>
   </el-dialog>
@@ -108,7 +113,7 @@ const config = ref({});
 const botId = ref(null);
 // const { loading, withLoading } = useLoading();
 const containerId = ref(null);
-
+const loading = ref(false);
 const openConfigDialog = async (data, row) => {
   dialogVisible.value = true;
   const new_config = data || {};
@@ -131,21 +136,23 @@ const openConfigDialog = async (data, row) => {
     containerId.value = "";
     config.value = {};
   }
-  // console.log(row, containerId.value, "containerId.value");
 };
 
 const saveConfig = async () => {
-  if (containerId.value) {
-    const body = {
-      ...config.value,
-      SINGLE_CHAT_PREFIX: config?.value?.SINGLE_CHAT_PREFIX?.split(/[，,]/),
-      SINGLE_CHAT_REPLY_PREFIX:
-        config?.value?.SINGLE_CHAT_REPLY_PREFIX?.split(/[，,]/),
-      GROUP_CHAT_PREFIX: config?.value?.GROUP_CHAT_PREFIX?.split(/[，,]/),
-      GROUP_NAME_WHITE_LIST:
-        config?.value?.GROUP_NAME_WHITE_LIST?.split(/[，,]/),
-    };
-    try {
+  if (loading.value) return;
+  loading.value = true;
+
+  try {
+    if (containerId.value) {
+      const body = {
+        ...config.value,
+        SINGLE_CHAT_PREFIX: config?.value?.SINGLE_CHAT_PREFIX?.split(/[，,]/),
+        SINGLE_CHAT_REPLY_PREFIX:
+          config?.value?.SINGLE_CHAT_REPLY_PREFIX?.split(/[，,]/),
+        GROUP_CHAT_PREFIX: config?.value?.GROUP_CHAT_PREFIX?.split(/[，,]/),
+        GROUP_NAME_WHITE_LIST:
+          config?.value?.GROUP_NAME_WHITE_LIST?.split(/[，,]/),
+      };
       const response = await request.post(
         `/api/save_bot_config/${botId.value}`,
         body
@@ -153,20 +160,22 @@ const saveConfig = async () => {
       if (response.success && response.code === 200) {
         ElMessage.success("配置保存成功");
         if (props.fetchBots) {
-          props.fetchBots();
+          await props.fetchBots();
         }
         dialogVisible.value = false;
       } else {
         throw new Error(response.message || "保存配置失败");
       }
-    } catch (err) {
-      ElMessage.error(err.message);
+    } else {
+      if (props.createBot) {
+        await props.createBot(config.value);
+        dialogVisible.value = false;
+      }
     }
-  } else {
-    console.log(11111, props);
-    if (props.createBot) {
-      props.createBot(config.value);
-    }
+  } catch (err) {
+    ElMessage.error(err.message);
+  } finally {
+    loading.value = false;
   }
 };
 

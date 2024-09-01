@@ -1,10 +1,6 @@
-from flask import Flask, request, jsonify
+from flask import Flask, Response, request, jsonify, stream_with_context
 from docker_manager import DockerManager
-# import os
-# import sqlite3
 from flask_cors import CORS  # 添加 CORS 支持
-# import jwt
-# from flask_socketio import SocketIO, send
 
 def make_response(code=200, success=True, data=None, message="操作成功"):
     """统一的响应格式"""
@@ -16,7 +12,6 @@ def make_response(code=200, success=True, data=None, message="操作成功"):
     })
 
 app = Flask(__name__)
-# socketio = SocketIO(app)
 
 CORS(app)  # 启用 CORS
 # Disable caching for streamed responses
@@ -39,8 +34,11 @@ def get_bots():
 
 @app.route('/api/logs/<container_id>', methods=['GET'])
 def get_container_logs(container_id):
-    data=docker_manager.get_container_logs(container_id)
-    return data
+    logs_data = docker_manager.get_container_logs(container_id)
+    if logs_data is None:
+        return make_response(code=404, success=False, message="未找到容器或获取日志失败")
+    
+    return make_response(data=logs_data)
    
 
 @app.route('/api/delete_bot/<container_id>', methods=['DELETE'])
