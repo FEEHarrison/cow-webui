@@ -140,6 +140,6 @@ location / {
 ## 赞助我一杯咖啡 ☕️
 
 如果你喜欢我的工作，可以通过wxpay来赞助我一杯咖啡。
-![GitHub Sponsors](https://github.com/FEEHarrison/cow-webui/blob/main/sponsor/WechatIMG386.jpeg)
+![GitHub Sponsors](https://github.com/FEEHarrison/cow-webui/blob/main/sponsor/WechatIMG.jpeg)
 
 
