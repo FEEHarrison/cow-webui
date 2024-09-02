@@ -7,6 +7,8 @@ import re
 import uuid
 import sqlite3
 import logging
+import psutil
+
 logger = logging.getLogger(__name__)
 
 class DockerManager:
@@ -238,59 +240,56 @@ class DockerManager:
             return "error"
     
     def start_docker_container(self, config_data):
-        # 清理未使用的Docker网络
-        try:
-            subprocess.run(["docker", "network", "prune", "-f"], check=True)
-            print("未使用的Docker网络已清理")
-        except subprocess.CalledProcessError as e:
-            print(f"清理Docker网络失败: {e}")
+        # 检查服务器资源是否足够
+        can_create, message = self.can_create_bot()
+        if not can_create:
+            return {"error": message}
 
-        service_id = self.generate_uuid()  # 每次调用都生成一个新的 UUID
-
-        # 使用通用方法处理配置并生成 Compose 文件
+        service_id = self.generate_uuid()
         compose_file_path, config_path = self.process_config_and_generate_compose(service_id, config_data)
 
-        # 启动容器
         try:
+            # 清理未使用的Docker网络
+            subprocess.run(["docker", "network", "prune", "-f"], check=True)
+            
+            # 启动容器
             subprocess.run(['docker-compose', '-f', compose_file_path, 'up', '-d'], check=True)
+            
             container_name = config_data.get("CONTAINER_NAME", service_id)
             container = self.client.containers.get(container_name)
             container_id = container.id[:12]
         
             with open(config_path, 'r', encoding='utf-8') as config_file:
                 current_config = json.load(config_file)
-            body = {
+            
+            bot_data = {
+                "container_id": container_id,
                 "name": config_data.get("BOT_NAME", "default_bot"),
                 "config": json.dumps(current_config),
-                "container_id": container_id,
                 "service_id": service_id
             }
             
-            # 使用sqlite替代操作bots.json文件
-            db_path = os.path.join(get_data_dir(), 'bots.db')
-            conn = sqlite3.connect(db_path)
-            cursor = conn.cursor()
-            
-            # 创建表（如果不存在）
-            cursor.execute('''CREATE TABLE IF NOT EXISTS bots
-                                (container_id TEXT PRIMARY KEY,
-                                name TEXT,
-                                config TEXT,
-                                service_id TEXT)''')
-            
-            # 插入或更新数据
-            cursor.execute('''INSERT OR REPLACE INTO bots
-                                (container_id, name, config, service_id)
-                                VALUES (?, ?, ?, ?)''',
-                            (body['container_id'], body['name'], body['config'], body['service_id']))
-            
-            conn.commit()
-            conn.close()
+            # 保存到数据库
+            self.save_bot_to_db(bot_data)
 
-            return body
+            return bot_data
         except Exception as e:
-            print(f"启动容器失败: {e}")
-            return {}
+            logger.error(f"启动容器失败: {e}")
+            return {"error": str(e)}
+
+    def save_bot_to_db(self, bot_data):
+        db_path = os.path.join(get_data_dir(), 'bots.db')
+        with sqlite3.connect(db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''CREATE TABLE IF NOT EXISTS bots
+                              (container_id TEXT PRIMARY KEY,
+                               name TEXT,
+                               config TEXT,
+                               service_id TEXT)''')
+            cursor.execute('''INSERT OR REPLACE INTO bots
+                              (container_id, name, config, service_id)
+                              VALUES (?, ?, ?, ?)''',
+                           (bot_data['container_id'], bot_data['name'], bot_data['config'], bot_data['service_id']))
 
     def get_bot_list(self):
         db_path = os.path.join(get_data_dir(), 'bots.db')
@@ -452,4 +451,38 @@ class DockerManager:
         
         return new_config
     
+    def get_server_resources(self):
+        """获取服务器当前资源状态"""
+        try:
+            # 获取CPU使用率
+            cpu_usage = psutil.cpu_percent(interval=1)
+            
+            # 获取内存使用情况
+            memory = psutil.virtual_memory()
+            memory_usage = memory.percent
+            
+            # 获取磁盘使用情况
+            disk = psutil.disk_usage('/')
+            disk_usage = disk.percent
+            
+            return {
+                'cpu_usage': cpu_usage,
+                'memory_usage': memory_usage,
+                'disk_usage': disk_usage
+            }
+        except Exception as e:
+            print(f"获取服务器资源状态时出错：{e}")
+            return None
+
+    def can_create_bot(self):
+        """判断是否可以创建新的机器人"""
+        resources = self.get_server_resources()
+        if resources is None:
+            return False, "无法获取服务器资源状态"
+        
+        if resources['cpu_usage'] > 80 or resources['memory_usage'] > 80 or resources['disk_usage'] > 80:
+            return False, "服务器资源使用率超过80%，无法创建新的机器人。请考虑删除一些现有的机器人后再尝试。"
+        
+        return True, "可以创建新的机器人"
+
     

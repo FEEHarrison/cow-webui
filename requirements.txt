@@ -1,5 +1,5 @@
 Flask
 docker
-pyqrcode
 flask-cors
 gunicorn
+psutil
