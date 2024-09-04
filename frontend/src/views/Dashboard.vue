@@ -29,5 +29,6 @@ onMounted(() => {
 <style scoped>
 .dashboard {
   padding: 20px;
+  width: calc(100vw - 40px);
 }
 </style>

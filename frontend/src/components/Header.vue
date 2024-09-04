@@ -28,21 +28,10 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { logout } from "@/utils/request";
-import { clearUserData } from "@/utils/request";
 const router = useRouter();
 const username = ref("");
 const userAvatar = ref("https://via.placeholder.com/40"); // 默认头像
-// const handleClearUserData = async () => {
-//   try {
-//     const res = await clearUserData();
-//     if (res.success) {
-//       ElMessage.success("用户数据已清空");
-//     }
-//     // 可能需要刷新页面或更新用户列表
-//   } catch (error) {
-//     ElMessage.error("清空用户数据失败");
-//   }
-// };
+
 const fetchUserInfo = () => {
   const userString = localStorage.getItem("user");
   if (userString) {

@@ -1,140 +1,130 @@
 <template>
   <div class="bot-management-console">
-    <el-container>
-      <!-- <el-header>
-        <h2>机器人管理控制台</h2>
-      </el-header> -->
-      <el-main>
-        <el-row :gutter="20">
-          <el-col :span="6">
+    <el-row :span="24">
+      <el-button type="primary" @click="showConfigDialog" class="custom-button"
+        >创建wx机器人</el-button
+      >
+    </el-row>
+
+    <!-- 数据列表 -->
+    <el-table
+      :data="bots"
+      class="custom-table"
+      style="width: 100%; margin-top: 20px"
+    >
+      <el-table-column
+        prop="id"
+        label="机器人ID"
+        width="180"
+        class="custom-column"
+      />
+      <el-table-column prop="name" label="机器人名称" class="custom-column" />
+      <el-table-column
+        prop="qr_code_url"
+        label="二维码"
+        width="180"
+        class="custom-column"
+      >
+        <template v-slot="scope">
+          <el-button
+            @click="getLogs(scope.row.id)"
+            :loading="loadingLogs[scope.row.id]"
+          >
+            获取日志
+          </el-button>
+        </template>
+      </el-table-column>
+      <el-table-column
+        prop="running"
+        label="状态"
+        width="100"
+        class="custom-column"
+      >
+        <template v-slot="scope">
+          <el-tag
+            v-if="scope && scope.row"
+            :type="scope.row.status ? 'success' : 'warning'"
+            class="status-tag"
+          >
+            {{ scope.row.status == "running" ? "运行中" : "已停止" }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column
+        fixed="right"
+        label="操作"
+        width="240"
+        class="custom-column"
+      >
+        <template v-slot="scope">
+          <div class="temp-box">
             <el-button
-              type="primary"
-              @click="showConfigDialog"
-              class="custom-button"
-              >创建wx机器人</el-button
+              v-if="scope && scope.row"
+              type="danger"
+              size="small"
+              @click="deleteBot(scope.row.id)"
+              :loading="loadingDelete[scope.row.id]"
+              class="action-button"
             >
-          </el-col>
-        </el-row>
-
-        <!-- 数据列表 -->
-        <el-table
-          :data="bots"
-          class="custom-table"
-          style="width: 100%; margin-top: 20px"
-        >
-          <el-table-column
-            prop="id"
-            label="机器人ID"
-            width="180"
-            class="custom-column"
-          />
-          <el-table-column
-            prop="name"
-            label="机器人名称"
-            width="180"
-            class="custom-column"
-          />
-          <el-table-column
-            prop="qr_code_url"
-            label="二维码"
-            width="180"
-            class="custom-column"
-          >
-            <template v-slot="scope">
-              <el-button
-                @click="getLogs(scope.row.id)"
-                :loading="loadingLogs[scope.row.id]"
-              >
-                获取日志
-              </el-button>
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="running"
-            label="状态"
-            width="100"
-            class="custom-column"
-          >
-            <template v-slot="scope">
-              <el-tag
-                v-if="scope && scope.row"
-                :type="scope.row.status ? 'success' : 'warning'"
-                class="status-tag"
-              >
-                {{ scope.row.status == "running" ? "运行中" : "已停止" }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="240" class="custom-column">
-            <template v-slot="scope">
-              <el-button
-                v-if="scope && scope.row"
-                type="danger"
-                size="small"
-                @click="deleteBot(scope.row.id)"
-                :loading="loadingDelete[scope.row.id]"
-                class="action-button"
-              >
-                删除
-              </el-button>
-              <el-button
-                v-if="scope && scope.row"
-                type="primary"
-                size="small"
-                @click="restartBot(scope.row.id)"
-                :loading="loadingRestart[scope.row.id]"
-                class="action-button"
-              >
-                重启
-              </el-button>
-              <el-button
-                v-if="scope && scope.row"
-                type="primary"
-                size="small"
-                @click="showConfigDialog(scope.row)"
-                :loading="loadingConfig[scope.row.id]"
-                class="action-button"
-              >
-                查看配置
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-        <el-dialog
-          v-model="dialogVisible"
-          class="dialogStyle"
-          @close="closeDialog"
-          :fullscreen="false"
-          :modal="true"
-          :append-to-body="true"
-        >
-          <div
-            class="dialog-content"
-            style="max-height: 40vh; overflow-y: auto; text-align: center"
-          >
-            <div v-if="qrCodeUrl" class="qr-code-container">
-              <img :src="qrCodeUrl" class="qr-image" />
-              <p>请扫描二维码登录</p>
-            </div>
-            <div v-else-if="qrCodeUrl === null" class="no-qr-code">
-              <p>未找到最近的二维码，请稍后再试</p>
-            </div>
-            <div class="log-container">
-              <!-- <div v-for="(log, index) in logs" :key="index">{{ log }}</div> -->
-              <div>{{ logs }}</div>
-            </div>
+              删除
+            </el-button>
+            <el-button
+              v-if="scope && scope.row"
+              type="primary"
+              size="small"
+              @click="restartBot(scope.row.id)"
+              :loading="loadingRestart[scope.row.id]"
+              class="action-button"
+            >
+              重启
+            </el-button>
+            <el-button
+              v-if="scope && scope.row"
+              type="primary"
+              size="small"
+              @click="showConfigDialog(scope.row)"
+              :loading="loadingConfig[scope.row.id]"
+              class="action-button"
+            >
+              查看配置
+            </el-button>
           </div>
-        </el-dialog>
-        <ConfigDialog
-          ref="configDialogRef"
-          :createBot="createBot"
-          :fetchBots="fetchBots"
-        />
+        </template>
+      </el-table-column>
+    </el-table>
+    <el-dialog
+      v-model="dialogVisible"
+      class="dialogStyle"
+      @close="closeDialog"
+      :fullscreen="false"
+      :modal="true"
+      :append-to-body="true"
+    >
+      <div
+        class="dialog-content"
+        style="max-height: 40vh; overflow-y: auto; text-align: center"
+      >
+        <div v-if="qrCodeUrl" class="qr-code-container">
+          <img :src="qrCodeUrl" class="qr-image" />
+          <p>请扫描二维码登录</p>
+        </div>
+        <div v-else-if="qrCodeUrl === null" class="no-qr-code">
+          <p>未找到最近的二维码，请稍后再试</p>
+        </div>
+        <div class="log-container">
+          <!-- <div v-for="(log, index) in logs" :key="index">{{ log }}</div> -->
+          <div>{{ logs }}</div>
+        </div>
+      </div>
+    </el-dialog>
+    <ConfigDialog
+      ref="configDialogRef"
+      :createBot="createBot"
+      :fetchBots="fetchBots"
+    />
 
-        <!-- 数据加载中的指示器 -->
-        <el-loading :fullscreen="loading" v-if="loading"></el-loading>
-      </el-main>
-    </el-container>
+    <!-- 数据加载中的指示器 -->
+    <el-loading :fullscreen="loading" v-if="loading"></el-loading>
   </div>
 </template>
 
@@ -279,11 +269,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.dialogStyle {
-  :global(.el-dialog__body) {
-    max-height: 200px;
-    overflow: hidden;
-  }
+.temp-box {
+  display: flex;
+  flex-wrap: nowrap;
 }
 /* General Styles */
 </style>
