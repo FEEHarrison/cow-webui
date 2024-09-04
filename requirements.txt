@@ -1,5 +1,0 @@
-Flask
-docker
-flask-cors
-gunicorn
-psutil

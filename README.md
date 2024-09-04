@@ -1,132 +1,166 @@
 # 项目名称: cow-webui
 
+## 项目简介
+
+cow-webui 是一个基于 Flask 和 Vue.js 的 Web 应用程序,用于管理和控制 Docker 容器中运行的机器人。该项目提供了用户管理、机器人创建、配置和监控等功能。
+
 ## 项目结构
 
 ```
-my-cow/
+cow-webui/
 │
-├── app.py                         # 主应用程序入口
-├── config.py                      # 配置文件
-├── docker_manager.py              # Docker 管理相关脚本
-├── requirements.txt               # Python 项目依赖文件
-├── package-lock.json              # npm 锁定文件
-├── cow-webui-vite/                # 前端项目文件夹
-│   ├── index.html                 # 前端入口文件
-│   ├── vite.config.js             # Vite 配置文件
-│   ├── package.json               # 前端项目依赖文件
-│   ├── public/                    # 静态资源文件夹
-│   ├── src/                       # 前端源代码文件夹
-│   │   ├── App.vue                # Vue 主组件文件
-│   │   ├── main.js                # 前端入口 JavaScript 文件
-│   │   ├── components/            # Vue 组件文件夹
-│   │   │   ├── HelloWorld.vue     # 示例组件
-│   │   │   ├── Dialog.vue         # 弹窗组件
-│   │   ├── utils/                 # 工具函数文件夹
-│   │   │   ├── request.js         # 请求处理工具
-│   │   ├── hooks/                 # 自定义 Hooks 文件夹
-│   │   │   ├── useLoading.js      # 加载状态 Hook
-│   ├── .vscode/                   # VSCode 配置文件夹
-│   │   ├── extensions.json        # 推荐的 VSCode 扩展
-│   ├── README.md                  # 前端项目 README 文件
-├── configs/                       # 项目配置文件夹
-│   ├── 9b1df1ee/                  # 配置文件集
-│   │   ├── config.json            # 配置 JSON 文件
-│   │   ├── docker-compose.yml     # Docker Compose 配置文件
-├── templates/                     # 模板文件夹
-│   ├── docker-compose.template.yml # Docker Compose 模板
-│   ├── config-template.json       # 配置模板文件
-├── data/                          # 数据文件夹
-│   ├── bots.json                  # 机器人配置 JSON 文件
-├── static/                        # 静态资源文件夹
-│   ├── qrcodes/                   # 存储二维码图像
-└── __pycache__/                   # Python 缓存文件夹
+├── backend/ # 后端 Flask 应用
+│ ├── app.py # 主应用程序入口
+│ ├── config.py # 配置文件
+│ ├── utils.py # 工具函数
+│ ├── docker_manager.py # Docker 管理相关脚本
+│ ├── requirements.txt # Python 项目依赖文件
+│ ├── userManager/ # 用户管理模块
+│ │ └── user_routes.py # 用户相关路由
+│ └── botManager/ # 机器人管理模块
+│ ├── bot_routes.py # 机器人相关路由
+│ ├── configs/ # 机器人配置文件夹
+│ └── templates/ # 配置模板文件夹
+│
+├── frontend/ # 前端 Vue.js 应用
+│ ├── index.html # 前端入口文件
+│ ├── vite.config.js # Vite 配置文件
+│ ├── package.json # 前端项目依赖文件
+│ └── src/ # 前端源代码文件夹
+│ ├── App.vue # Vue 主组件文件
+│ ├── main.js # 前端入口 JavaScript 文件
+│ ├── components/ # Vue 组件文件夹
+│ ├── utils/ # 工具函数文件夹
+│ └── hooks/ # 自定义 Hooks 文件夹
+│
+└── README.md # 项目说明文件
 ```
 
-## 依赖安装
+## 功能特性
 
-### 后端依赖
+- 用户注册、登录和身份验证
+- 管理员用户设置和管理
+- 创建、管理和监控 Docker 容器中的机器人
+- 查看机器人日志
+- 更新机器人配置
 
-请确保已安装 Python 3.8 或更高版本。使用以下命令安装 Python 依赖项：
+## 安装和运行
 
-```bash
-pip install -r requirements.txt
-```
+### 后端设置
 
-### 前端依赖
+1. 进入后端目录:
+   ```bash
+   cd backend
+   ```
 
-请确保已安装 Node.js 及 npm。使用以下命令安装前端依赖项：
+2. 创建虚拟环境并激活:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # 在 Windows 上使用 venv\Scripts\activate
+   ```
 
-```bash
-cd cow-webui-vite
-npm install
-```
+3. 安装依赖:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## 启动应用程序
+4. 运行后端服务:
+   ```bash
+   python app.py
+   ```
 
-### 本地启动后端
+### 前端设置
 
-```bash
-python app.py
-```
-### 本地启动前端
+1. 进入前端目录:
+   ```bash
+   cd frontend
+   ```
 
-```bash
-cd cow-webui-vite
-npm run dev
-#配置.env.devlopment
-```
+2. 安装依赖:
+   ```bash
+   npm install
+   ```
 
-### 服务器启动后端
-
-```bash
-方式1 （推荐）
-chmod +x start.sh
-./start.sh //启动服务
-
-tail -f access.log //查看运行日志
-tail -f error.log //查看错误日志
-
-chmod +x stop.sh 
-./stop.sh //关闭服务
+3. 运行开发服务器:
+   ```bash
+   npm run dev
+   ```
 
 
-方式2 （flask后端服务，启动不稳定，不推荐）
-nohup python3 app.py & tail -f nohup.out //启动服务
-ps -ef | grep app.py | grep -v grep //命令可查看运行于后台的进程
-kill 进程id //关闭进程
-tail -f nohup.out //查看日志
 
-```
 
-### 服务器启动前端
-#### 打包
-```bash
-cd cow-webui-vite
-npm run build
+### 服务器部署指引
 
-touch .env.production //前端目录创建配置文件并配置.env.production，如下
-VITE_BASE_API=http://your-domain.com/
-```
-#### 将dist文件部署到服务器使用nginx代理
-```bash
-#nginx vue
-location / {
-    root /your-path/cow-webui/cow-webui-vite/dist;
-    try_files $uri $uri/ /index.html;
-}
-```
+#### 前端部署
 
+1. 打包前端项目:
+   ```bash
+   cd frontend
+   npm run build
+   ```
+
+2. 配置环境变量:
+   ```bash
+   touch .env.production
+   echo "VITE_BASE_API=http://api-your-domain.com/" >> .env.production
+   ```
+
+3. 配置Nginx:
+   将以下配置添加到Nginx的server块中:
+   ```nginx
+   location / {
+       root /path/to/your/frontend/dist;
+       try_files $uri $uri/ /index.html;
+   }
+   ```
+
+#### 后端部署
+
+1. 使用脚本启动项目（推荐）:
+   ```bash
+   chmod +x start.sh
+   ./start.sh  # 启动服务
+
+   tail -f access.log  # 查看运行日志
+   tail -f error.log   # 查看错误日志
+
+   chmod +x stop.sh 
+   ./stop.sh  # 关闭服务
+   ```
+
+2. 直接启动Flask服务（不推荐）:
+   ```bash
+   nohup python3 app.py & tail -f nohup.out  # 启动服务
+   ps -ef | grep app.py | grep -v grep       # 查看后台进程
+   kill <进程id>                             # 关闭进程
+   tail -f nohup.out                         # 查看日志
+   ```
 
 ## 使用 Docker(后续支持)
 
 项目提供了 Docker 支持，使用以下命令启动：
 
 ```bash
-注意本项目是使用接口操作docker实现的，所以服务器需要先安装docker
+#注意本项目是使用接口操作docker实现的，所以服务器需要先安装docker
 ```
 
 ## QA
 1.第一次启动项目可以稍等几分钟，需要等服务拉取容器镜像成功后才可以正常操作，相当于初始化过程。
+
+2.如果本地启动后端服务报错，请检查本地环境是否安装了docker环境。
+
+3.如果启动后端成功，但是第一次创建机器人失败，请检查是否是docker拉取镜像失败，可以使用我代理的docker镜像地址进行拉取，可以在docker操作界面配置镜像源。
+
+4.进入项目默认管理员账号为admin
+
+```bash
+#为了加速镜像拉取,你可以使用以下命令设置registery mirror:
+    sudo tee /etc/docker/daemon.json <<EOF
+    {
+        "registry-mirrors": ["https://cloudflare.casuallychat.cn"]
+    }
+    EOF
+```
 
 ## 项目配置
 
