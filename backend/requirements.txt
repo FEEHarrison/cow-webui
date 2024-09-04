@@ -1,0 +1,7 @@
+Flask
+docker
+flask-cors
+gunicorn
+psutil
+bcrypt
+PyJWT
