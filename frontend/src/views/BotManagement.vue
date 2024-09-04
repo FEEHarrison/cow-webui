@@ -57,38 +57,37 @@
         class="custom-column"
       >
         <template v-slot="scope">
-          <div class="temp-box">
-            <el-button
-              v-if="scope && scope.row"
-              type="danger"
-              size="small"
-              @click="deleteBot(scope.row.id)"
-              :loading="loadingDelete[scope.row.id]"
-              class="action-button"
-            >
-              删除
-            </el-button>
-            <el-button
-              v-if="scope && scope.row"
-              type="primary"
-              size="small"
-              @click="restartBot(scope.row.id)"
-              :loading="loadingRestart[scope.row.id]"
-              class="action-button"
-            >
-              重启
-            </el-button>
-            <el-button
-              v-if="scope && scope.row"
-              type="primary"
-              size="small"
-              @click="showConfigDialog(scope.row)"
-              :loading="loadingConfig[scope.row.id]"
-              class="action-button"
-            >
-              查看配置
-            </el-button>
-          </div>
+          <el-button
+            v-if="scope && scope.row"
+            type="danger"
+            size="small"
+            @click="deleteBot(scope.row.id)"
+            :loading="loadingDelete[scope.row.id]"
+            class="action-button"
+          >
+            删除
+          </el-button>
+          <el-button
+            v-if="scope && scope.row"
+            type="primary"
+            size="small"
+            @click="restartBot(scope.row.id)"
+            :loading="loadingRestart[scope.row.id]"
+            class="action-button"
+          >
+            重启
+          </el-button>
+          <el-button
+            v-if="scope && scope.row"
+            type="primary"
+            size="small"
+            @click="showConfigDialog(scope.row)"
+            :loading="loadingConfig[scope.row.id]"
+            class="action-button"
+          >
+            查看配置
+          </el-button>
+          <!-- 删除这里的多余 </div> 标签 -->
         </template>
       </el-table-column>
     </el-table>

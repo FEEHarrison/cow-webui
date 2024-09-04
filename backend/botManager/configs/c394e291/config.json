@@ -12,7 +12,9 @@
     "SINGLE_CHAT_PREFIX": [
         ""
     ],
-    "SINGLE_CHAT_REPLY_PREFIX": "",
+    "SINGLE_CHAT_REPLY_PREFIX": [
+        ""
+    ],
     "GROUP_CHAT_PREFIX": [
         "小助手"
     ],
@@ -32,5 +34,6 @@
     "SUBSCRIBE_MSG": "感谢您的关注！\n这里是AI智能助手，可以自由对话。\n支持语音对话。\n支持图片输入。\n支持图片输出，画字开头的消息将按要求创作图片。\n支持tool、角色扮演和文字冒险等丰富的插件。\n输入{trigger_prefix}#help 查看详细指令。",
     "USE_LINKAI": "False",
     "LINKAI_API_KEY": "",
-    "LINKAI_APP_CODE": ""
+    "LINKAI_APP_CODE": "",
+    "BOT_NAME": "124"
 }

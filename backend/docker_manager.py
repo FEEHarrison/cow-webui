@@ -353,7 +353,7 @@ class DockerManager:
         return str(uuid.uuid4())[:8]
    
     def restart_bots(self, container_id):
-        db_path = os.path.join(get_data_dir(), 'bots.db')
+        db_path = os.path.join(get_data_dir(), 'app.db')
         
         try:
             conn = sqlite3.connect(db_path)
