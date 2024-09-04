@@ -1,11 +1,6 @@
 <template>
   <div class="user-management-console">
     <el-card class="box-card">
-      <!-- <template #header>
-        <div class="card-header">
-          <span>用户管理控制台</span>
-        </div>
-      </template> -->
       <el-table
         :data="users"
         style="width: 100%; margin-top: 20px"
@@ -21,7 +16,7 @@
             <el-button
               type="danger"
               size="small"
-              @click="deleteUser(scope.row.id)"
+              @click="handleDeleteUser(scope.row.id)"
               :loading="loadingDelete[scope.row.id]"
             >
               删除
@@ -55,6 +50,31 @@ const fetchUsers = async () => {
     ElMessage.error(err.message);
   } finally {
     loading.value = false;
+  }
+};
+
+const handleDeleteUser = async (userId) => {
+  try {
+    await ElMessageBox.confirm("确定要删除该用户吗？", "警告", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    });
+
+    loadingDelete[userId] = true;
+    const response = await deleteUser(userId);
+    if (response.success) {
+      ElMessage.success("用户删除成功");
+      await fetchUsers(); // 刷新用户列表
+    } else {
+      throw new Error(response.message || "删除用户失败");
+    }
+  } catch (err) {
+    if (err !== "cancel") {
+      ElMessage.error(err.message);
+    }
+  } finally {
+    loadingDelete[userId] = false;
   }
 };
 
