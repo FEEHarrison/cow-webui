@@ -1,27 +1,42 @@
 <template>
-  <div class="admin-setup">
-    <h2>设置管理员密码</h2>
-    <el-form :model="form" @submit.native.prevent="onSubmit">
+  <el-card class="admin-setup">
+    <template #header>
+      <h2 class="card-title">设置管理员密码</h2>
+    </template>
+    <el-form :model="form" @submit.prevent="onSubmit" label-position="top">
       <el-form-item label="管理员密码">
-        <el-input type="password" v-model="form.password"></el-input>
+        <el-input
+          v-model="form.password"
+          type="password"
+          show-password
+        ></el-input>
       </el-form-item>
       <el-form-item label="确认密码">
-        <el-input type="password" v-model="form.confirmPassword"></el-input>
+        <el-input
+          v-model="form.confirmPassword"
+          type="password"
+          show-password
+        ></el-input>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="onSubmit" :loading="loading"
-          >设置密码</el-button
+        <el-button
+          type="primary"
+          @click="onSubmit"
+          :loading="loading"
+          class="submit-button"
         >
+          设置密码
+        </el-button>
       </el-form-item>
     </el-form>
-  </div>
+  </el-card>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { setupAdmin, checkAdminSetup } from "@/api/user"; // 导入 setupAdmin 函数
+import { setupAdmin, checkAdminSetup } from "@/api/user";
 
 const form = ref({
   password: "",
@@ -33,8 +48,8 @@ const router = useRouter();
 
 onMounted(async () => {
   try {
-    const response = await checkAdminSetup();
-    if (response.data.is_setup) {
+    const { data } = await checkAdminSetup();
+    if (data.is_setup) {
       ElMessage.info("管理员已设置，正在跳转到登录页面");
       router.push("/login");
     }
@@ -42,6 +57,7 @@ onMounted(async () => {
     ElMessage.error("检查管理员设置状态失败");
   }
 });
+
 const onSubmit = async () => {
   if (form.value.password !== form.value.confirmPassword) {
     ElMessage.error("两次输入的密码不一致");
@@ -50,9 +66,9 @@ const onSubmit = async () => {
 
   loading.value = true;
   try {
-    const response = await setupAdmin(form.value.password);
-    if (response.success) {
-      ElMessage.success(response.message || "管理员设置成功，请登录");
+    const { success, message } = await setupAdmin(form.value.password);
+    if (success) {
+      ElMessage.success(message || "管理员设置成功，请登录");
       router.push("/login");
     }
   } catch (error) {
@@ -65,12 +81,17 @@ const onSubmit = async () => {
 
 <style scoped>
 .admin-setup {
-  max-width: 400px;
+  width: 400px;
   margin: 50px auto;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  margin: 0;
+  font-size: 20px;
+  color: #303133;
+}
+
+.submit-button {
+  width: 100%;
 }
 </style>
