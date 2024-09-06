@@ -3,6 +3,13 @@
 # 确保在backend目录下执行
 cd "$(dirname "$0")"
 
+# 打印当前工作目录
+echo "当前工作目录: $(pwd)"
+
+# 列出目录内容
+echo "目录内容:"
+ls -la
+
 # 检查并创建日志目录
 LOG_DIR="logs"
 mkdir -p $LOG_DIR
