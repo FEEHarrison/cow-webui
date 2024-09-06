@@ -25,17 +25,20 @@ router.beforeEach(async (to, from, next) => {
   if (publicRoutes.includes(to.path)) {
     return next();
   }
-
-  try {
-    const response = await checkLogin();
-    if (response.success) {
-      return next();
-    } else {
+  if (to.meta.requiresAuth) {
+    try {
+      const response = await checkLogin();
+      if (response.success) {
+        return next();
+      } else {
+        return next('/login');
+      }
+    } catch (error) {
+      console.error('检查登录状态失败', error);
       return next('/login');
     }
-  } catch (error) {
-    console.error('检查登录状态失败', error);
-    return next('/login');
+  } else {
+    return next();
   }
 });
 

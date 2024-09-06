@@ -18,7 +18,12 @@
         width="180"
         class="custom-column"
       />
-      <el-table-column prop="name" label="机器人名称" class="custom-column" />
+      <el-table-column
+        prop="bot_name"
+        label="机器人名称"
+        width="180"
+        class="custom-column"
+      />
       <el-table-column
         prop="qr_code_url"
         label="二维码"
@@ -34,6 +39,18 @@
           </el-button>
         </template>
       </el-table-column>
+      <el-table-column
+        prop="platform"
+        label="平台"
+        width="180"
+        class="custom-column"
+      />
+      <el-table-column
+        prop="model"
+        label="模型"
+        width="180"
+        class="custom-column"
+      />
       <el-table-column
         prop="running"
         label="状态"
@@ -57,36 +74,38 @@
         class="custom-column"
       >
         <template v-slot="scope">
-          <el-button
-            v-if="scope && scope.row"
-            type="danger"
-            size="small"
-            @click="deleteBot(scope.row.id)"
-            :loading="loadingDelete[scope.row.id]"
-            class="action-button"
-          >
-            删除
-          </el-button>
-          <el-button
-            v-if="scope && scope.row"
-            type="primary"
-            size="small"
-            @click="restartBot(scope.row.id)"
-            :loading="loadingRestart[scope.row.id]"
-            class="action-button"
-          >
-            重启
-          </el-button>
-          <el-button
-            v-if="scope && scope.row"
-            type="primary"
-            size="small"
-            @click="showConfigDialog(scope.row)"
-            :loading="loadingConfig[scope.row.id]"
-            class="action-button"
-          >
-            查看配置
-          </el-button>
+          <div class="temp-box">
+            <el-button
+              v-if="scope && scope.row"
+              type="danger"
+              size="small"
+              @click="deleteBot(scope.row.id)"
+              :loading="loadingDelete[scope.row.id]"
+              class="action-button"
+            >
+              删除
+            </el-button>
+            <el-button
+              v-if="scope && scope.row"
+              type="primary"
+              size="small"
+              @click="restartBot(scope.row.id)"
+              :loading="loadingRestart[scope.row.id]"
+              class="action-button"
+            >
+              重启
+            </el-button>
+            <el-button
+              v-if="scope && scope.row"
+              type="primary"
+              size="small"
+              @click="showConfigDialog(scope.row)"
+              :loading="loadingConfig[scope.row.id]"
+              class="action-button"
+            >
+              查看配置
+            </el-button>
+          </div>
           <!-- 删除这里的多余 </div> 标签 -->
         </template>
       </el-table-column>
@@ -98,10 +117,11 @@
       :fullscreen="false"
       :modal="true"
       :append-to-body="true"
+      width="70%"
     >
       <div
         class="dialog-content"
-        style="max-height: 40vh; overflow-y: auto; text-align: center"
+        style="max-height: 50vh; overflow-y: auto; text-align: center"
       >
         <div v-if="qrCodeUrl" class="qr-code-container">
           <img :src="qrCodeUrl" class="qr-image" />
@@ -215,7 +235,6 @@ const fetchBots = async () => {
       bots.value =
         response.data.map((item) => ({
           ...item,
-          bot_name: item.config.BOT_NAME,
         })) || [];
     } else {
       throw new Error(response.message || "获取机器人列表失败");
@@ -227,7 +246,6 @@ const fetchBots = async () => {
     loading.value = false;
   }
 };
-
 const restartBot = async (id) => {
   loadingRestart[id] = true;
   try {
@@ -271,6 +289,11 @@ onMounted(() => {
 .temp-box {
   display: flex;
   flex-wrap: nowrap;
+}
+.qr-image {
+  width: 100%;
+  max-height: 400px;
+  max-width: 400px;
 }
 /* General Styles */
 </style>

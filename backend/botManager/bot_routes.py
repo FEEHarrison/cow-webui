@@ -1,6 +1,8 @@
-from flask import Flask,Blueprint, request
+from flask import Flask,Blueprint, json, request
 from docker_manager import DockerManager
 from utils import make_response ,token_required
+from flask_cors import cross_origin
+from config import config
 
 bot_bp = Blueprint('bot', __name__)
 docker_manager = DockerManager()
@@ -25,9 +27,9 @@ def create_bot(current_user):
         print(f"创建机器人时出错: {str(e)}")
         return make_response(code=500, success=False, message=str(e))
 
-@bot_bp.route('/api/check_login', methods=['GET'])
 
 @bot_bp.route('/api/bots', methods=['GET'])
+@cross_origin(origins=config.CORS_ORIGINS, supports_credentials=True)
 @token_required
 def get_bots(current_user):
     if current_user['role'] == 'root':
@@ -63,12 +65,12 @@ def restart_bot(container_id):
 def save_bot_config(bot_id):
     new_config = request.json
     try:
-        # 复用通用配置处理逻辑
-        data=docker_manager.save_config(bot_id,new_config)
-        return make_response(data=data,message="配置部分更新并生成新的 Compose 文件成功")
+        # 更新配置
+        data = docker_manager.save_config(bot_id, new_config)
+        
+        return make_response(data=data, message="配置更新成功")
     except Exception as e:
-        return make_response(code=500, success=False, message=str(e))
-    
+        return make_response(code=500, success=False, message=f"保存配置失败: {str(e)}")
 
 @bot_bp.route('/api/get_bot_config/<bot_id>', methods=['GET'])
 def get_bot_config(bot_id):
@@ -79,4 +81,4 @@ def get_bot_config(bot_id):
         else:
             return make_response(code=404, success=False, message="配置未找到")
     except Exception as e:
-        return make_response(code=500, success=False, message=str(e))    
+        return make_response(code=500, success=False, message=str(e))

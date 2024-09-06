@@ -2,13 +2,14 @@ import os
 import json
 import docker
 import subprocess
-from config import get_config_dir, get_template_dir,get_data_dir
 import re
 import uuid
 import sqlite3
 import logging
 import psutil
 import bcrypt
+from config import config
+from platform_config import PlatformConfig
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -22,7 +23,7 @@ class DockerManager:
             print(f"Docker client 初始化失败: {e}")
             self.client = None
 
-        self.db_path = os.path.join(get_data_dir(), 'app.db')
+        self.db_path = config.DB_PATH
         self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.create_tables()
         print("DockerManager 初始化完成")
@@ -32,8 +33,8 @@ class DockerManager:
             self.conn.close()
 
     def connect_db(self):
-        db_path = os.path.join(get_data_dir(), 'users.db')
-        self.conn = sqlite3.connect(db_path, check_same_thread=False)
+        # db_path = os.path.join(config.get_data_dir(), 'app.db')
+        self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
     def create_tables(self):
         cursor = self.conn.cursor()
         
@@ -43,16 +44,20 @@ class DockerManager:
                         username TEXT UNIQUE,
                         password TEXT,
                         role TEXT,
+                        platform TEXT,
+                        model TEXT,
                         max_bots INTEGER)''')
 
         # 创建 bots 表
         cursor.execute('''CREATE TABLE IF NOT EXISTS bots
-                        (container_id TEXT PRIMARY KEY,
-                        name TEXT,
-                        config TEXT,
-                        service_id TEXT,
-                        user_id INTEGER,
-                        FOREIGN KEY(user_id) REFERENCES users(id))''')
+                    (container_id TEXT PRIMARY KEY,
+                    bot_name TEXT,
+                    config TEXT,
+                    model TEXT,
+                    platform TEXT,
+                    service_id TEXT UNIQUE,
+                    user_id INTEGER,
+                    FOREIGN KEY(user_id) REFERENCES users(id))''')
 
         self.conn.commit()
         print("数据库表结构检查和更新完成")
@@ -203,160 +208,168 @@ class DockerManager:
         return None
 
     def process_config_and_generate_compose(self, service_id, config_data):
-        """处理配置并生成 Docker Compose 文件"""
-        # 使用sqlite数据库
-        db_path = os.path.join(get_data_dir(), 'app.db')
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-
-        try:
-            # 创建表（如果不存在）
-            cursor.execute('''CREATE TABLE IF NOT EXISTS bots
-                              (container_id TEXT PRIMARY KEY,
-                               name TEXT,
-                               config TEXT,
-                               service_id TEXT)''')
-
-            # 查找对应的container_id
-            cursor.execute("SELECT container_id FROM bots WHERE service_id = ?", (service_id,))
-            result = cursor.fetchone()
-            container_id = result[0] if result else None
-
-            if container_id:
-                # 更新机器人名称
-                cursor.execute("UPDATE bots SET name = ? WHERE container_id = ?", 
-                               (config_data["BOT_NAME"], container_id))
-                conn.commit()
-
-        except sqlite3.Error as e:
-            print(f"数据库错误: {e}")
-        except KeyError as e:
-            print(f"键错误: {e} - 请检查数据中是否包含所有必需的键。")
-        except Exception as e:
-            print(f"意外错误: {e}")
-        finally:
-            conn.close()
-
-        config_path = self.generate_config(service_id, config_data)
-        # 生成Docker Compose文件
-        compose_file_path = self.generate_docker_compose_file(service_id, config_path)
+        print(f"处理配置并生成 Docker Compose 文件，服务数据: {config_data}")
         
-        return compose_file_path, config_path
+        
+        # 生成 Docker Compose 文件
+        compose_file_path = self.generate_docker_compose_file(service_id, config_data)
+        print(f"生成的 Docker Compose 文件路径: {compose_file_path}")
+        return compose_file_path
         
     def generate_config(self, service_id, config_data):
-        template_path = os.path.join(get_template_dir(), "config-template.json")
+        template_path = os.path.join(config.get_template_dir(), "config-template.json")
         with open(template_path, 'r', encoding='utf-8') as template_file:
             config_template = json.load(template_file)
 
-        config_template = {key.upper(): value for key, value in config_template.items()}
-        config_template.update(config_data)
-        config_template= json.dumps(config_template, indent=4,ensure_ascii=False)
+        # 合并配置数据，保持原有的大小写
+        for key, value in config_data.items():
+            config_template[key] = value
 
-        replacements = {
-            "CONVERSATION_MAX_TOKENS": int(config_data.get("CONVERSATION_MAX_TOKENS", 1000)),
-            "SPEECH_RECOGNITION": config_data.get("SPEECH_RECOGNITION", "False"),
-            "CHARACTER_DESC": config_data.get("CHARACTER_DESC", "You are an AI assistant."),
-            "EXPIRES_IN_SECONDS": int(config_data.get("EXPIRES_IN_SECONDS", 3600)),
-            "USE_GLOBAL_PLUGIN_CONFIG": config_data.get("USE_GLOBAL_PLUGIN_CONFIG", "True"),
-            "USE_LINKAI": config_data.get("USE_LINKAI", "False"),
-            "OPEN_AI_API_KEY": config_data.get("OPEN_AI_API_KEY", ""),
-            "OPEN_AI_API_BASE": config_data.get("OPEN_AI_API_BASE", ""),
-            "MODEL": config_data.get("MODEL", "gpt-4o"),
-            "PROXY": config_data.get("PROXY", ""),
-            "SINGLE_CHAT_PREFIX": config_data.get("SINGLE_CHAT_PREFIX", "['']"),
-            "SINGLE_CHAT_REPLY_PREFIX": config_data.get("SINGLE_CHAT_REPLY_PREFIX", ""),
-            "GROUP_CHAT_PREFIX": config_data.get("GROUP_CHAT_PREFIX", "['']"),
-            "GROUP_NAME_WHITE_LIST": config_data.get("GROUP_NAME_WHITE_LIST", "['ALL_GROUP']"),
-            "IMAGE_CREATE_PREFIX": config_data.get("IMAGE_CREATE_PREFIX", "['画']"),
-            "LINKAI_API_KEY": config_data.get("LINKAI_API_KEY", ""),
-            "LINKAI_APP_CODE": config_data.get("LINKAI_APP_CODE", ""),
-            "TEMPERATURE":config_data.get("TEMPERATURE", "0.7"),
-        }
+        # 确保所有必要的字段都存在
+        required_fields = [
+            "CONVERSATION_MAX_TOKENS", "SPEECH_RECOGNITION", "CHARACTER_DESC",
+            "EXPIRES_IN_SECONDS", "USE_GLOBAL_PLUGIN_CONFIG", "USE_LINKAI",
+            "MODEL", "PROXY", "SINGLE_CHAT_PREFIX", "SINGLE_CHAT_REPLY_PREFIX",
+            "GROUP_CHAT_PREFIX", "GROUP_NAME_WHITE_LIST", "IMAGE_CREATE_PREFIX",
+            "LINKAI_API_KEY", "LINKAI_APP_CODE", "TEMPERATURE",
+            "ZHIPU_AI_API_KEY", "ZHIPU_AI_API_BASE"
+        ]
 
-        
-        for key, value in replacements.items():
-            config_template = config_template.replace(f'{{{{{key}}}}}', str(value))
-        
-        config_dir = os.path.join(get_config_dir(), service_id)
-        if not os.path.exists(config_dir):
-            os.makedirs(config_dir)
+        for field in required_fields:
+            if field not in config_template:
+                config_template[field] = config_data.get(field, "")
+
+        # 保存配置文件
+        config_dir = os.path.join(config.get_config_dir(), service_id)
+        os.makedirs(config_dir, exist_ok=True)
         config_path = os.path.join(config_dir, 'config.json')
-        with open(config_path, 'w') as config_file:
-            config_file.write(config_template)
-        
+        with open(config_path, 'w', encoding='utf-8') as config_file:
+            json.dump(config_template, config_file, indent=4, ensure_ascii=False)
+
         return config_path
     
-    def generate_docker_compose_file(self, service_id, config_path):
-        """生成Docker Compose文件"""
-        compose_template_path = os.path.join(get_template_dir(), 'docker-compose.template.yml')
+    def generate_docker_compose_file(self, service_id, config_data):
+        print(f"生成 Docker Compose 文件，服务ID: {service_id}")
+        print(f"配置数据: {config_data}")
+        
+        compose_template_path = os.path.join(config.get_template_dir(), 'docker-compose.template.yml')
         with open(compose_template_path, 'r', encoding='utf-8') as file:
             compose_content = file.read()
-        
-        compose_content = compose_content.replace('{{service_name}}', str(service_id))
-        
-        with open(config_path, 'r', encoding='utf-8') as config_file:
-            merged_config = json.load(config_file)
 
-        for key, value in merged_config.items():
-            placeholder = f'{{{{{key}}}}}'
-            if isinstance(value, (list, dict)):
-                value = json.dumps(value, ensure_ascii=False)
+        # 替换服务名
+        compose_content = compose_content.replace('{{service_name}}', service_id)
+
+        # 准备环境变量
+        env_vars = {}
+        for key, value in config_data.items():
+            if key in ['CONVERSATION_MAX_TOKENS', 'TEMPERATURE']:
+                # 确保这些值是数字格式
+                try:
+                    value = float(value)
+                    if value.is_integer():
+                        value = int(value)
+                    env_vars[key] = f'{value}'
+                except ValueError:
+                    env_vars[key] = f'"{value}"'
+            elif isinstance(value, (list, dict)):
+                env_vars[key] = f"'{json.dumps(value, ensure_ascii=False)}'"
             else:
-                value = str(value)
-            compose_content = compose_content.replace(placeholder, value)
+                env_vars[key] = f'"{value}"'
+
+        # 添加平台特定的环境变量
+        platform = config_data.get('PLATFORM', '').lower()
+        platform_env = PlatformConfig.get_platform_env_vars(platform, config_data)
+        for key, value in platform_env.items():
+            if value and key not in env_vars:
+                env_vars[key] = f'"{value}"'
+
+        # 将所有环境变量插入到 compose 文件中
+        env_string = '\n'.join(f'      {key}: {value}' for key, value in env_vars.items())
         
-        compose_file_path = os.path.join(os.path.dirname(config_path), 'docker-compose.yml')
+        # 使用正则表达式替换环境变量部分
+        import re
+        pattern = re.compile(r'environment:.*?(?=\n\w|$)', re.DOTALL)
+        compose_content = pattern.sub(f'environment:\n{env_string}', compose_content)
+
+        # 写入生成的 Docker Compose 文件
+        compose_dir = os.path.join(config.get_config_dir(), service_id)
+        os.makedirs(compose_dir, exist_ok=True)
+        compose_file_path = os.path.join(compose_dir, 'docker-compose.yml')
         with open(compose_file_path, 'w', encoding='utf-8') as file:
             file.write(compose_content)
-        
+
+        print(f"生成的 Docker Compose 文件内容:\n{compose_content}")
         return compose_file_path
 
-    def get_bot_list(self, user_id=None):
-        bot_list = []
+    def get_bot_list(self, user_id=None, page=1, per_page=10):
         cursor = self.conn.cursor()
 
         try:
             if user_id:
-                cursor.execute("SELECT container_id, name, config, service_id, user_id FROM bots WHERE user_id = ?", (user_id,))
+                query = "SELECT DISTINCT container_id, bot_name, config, service_id, user_id, platform, model FROM bots WHERE user_id = ?"
+                params = (user_id,)
             else:
-                cursor.execute("SELECT container_id, name, config, service_id, user_id FROM bots")
-            
+                query = "SELECT DISTINCT container_id, bot_name, config, service_id, user_id, platform, model FROM bots"
+                params = ()
+
+            # 添加分页
+            query += " LIMIT ? OFFSET ?"
+            params += (per_page, (page - 1) * per_page)
+
+            cursor.execute(query, params)
             rows = cursor.fetchall()
 
+            bot_list = []
             for row in rows:
-                container_id, name, config, service_id, bot_user_id = row
-                try:
-                    container = self.client.containers.get(container_id)
-                    status = container.status
-                except docker.errors.NotFound:
-                    status = "not found"
+                container_id, bot_name, config, service_id, bot_user_id, platform, model = row
+                status = "unknown"
+                if container_id:
+                    try:
+                        container = self.client.containers.get(container_id)
+                        status = container.status
+                    except docker.errors.NotFound:
+                        status = "not found"
+                    except Exception as e:
+                        logger.error(f"获取容器状态时出错 (ID: {container_id}): {e}")
+                        status = "error"
+
+                # 解析配置并移除敏感信息
+                filtered_config = {}
+                if config:
+                    try:
+                        config_dict = json.loads(config)
+                        filtered_config = {k: v for k, v in config_dict.items() if not k.endswith('_API_KEY')}
+                    except json.JSONDecodeError:
+                        logger.error(f"解析配置 JSON 时出错 (ID: {container_id})")
+                    except TypeError:
+                        logger.error(f"配置不是有效的 JSON 字符串 (ID: {container_id})")
 
                 bot_list.append({
-                    "id": container_id,
-                    "service_id": service_id,
-                    "name": name,
+                    "id": container_id or "",
+                    "service_id": service_id or "",
+                    "bot_name": bot_name or "",
                     "status": status,
-                    "config": config,
-                    "user_id": bot_user_id
+                    "config": filtered_config,
+                    "user_id": bot_user_id,
+                    "platform": platform or "",
+                    "model": model or ""
                 })
 
+            return bot_list
         except Exception as e:
-            print(f"从数据库加载机器人列表时出错: {e}")
-            import traceback
-            print(traceback.format_exc())
+            logger.error(f"从数据库加载机器人列表时出错: {e}")
+            return []
 
-        return bot_list
-
-       
+      
 
     def generate_uuid(self):
         return str(uuid.uuid4())[:8]
    
     def restart_bots(self, container_id):
-        db_path = os.path.join(get_data_dir(), 'app.db')
+        # db_path = os.path.join(config.get_data_dir(), 'app.db')
         
         try:
-            conn = sqlite3.connect(db_path)
+            conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
             cursor.execute("SELECT service_id FROM bots WHERE container_id = ?", (container_id,))
@@ -364,7 +377,7 @@ class DockerManager:
             
             if result:
                 service_id = result[0]
-                config_dir = os.path.join(get_config_dir(), service_id)
+                config_dir = os.path.join(config.get_config_dir(), service_id)
                 compose_file_path = os.path.join(config_dir, 'docker-compose.yml')
                 
                 try:
@@ -422,7 +435,7 @@ class DockerManager:
             print(f"操作容器时发生错误: {str(e)}")
             return "error"
     
-    def start_docker_container(self, config_data,user_id):
+    def start_docker_container(self, config_data, user_id):
         print(f"开始创建机器人，用户ID: {user_id}")
         print(f"配置数据: {config_data}")
         # 检查服务器资源是否足够
@@ -431,7 +444,7 @@ class DockerManager:
             return {"error": message}
 
         service_id = self.generate_uuid()
-        compose_file_path, config_path = self.process_config_and_generate_compose(service_id, config_data)
+        compose_file_path = self.process_config_and_generate_compose(service_id, config_data)
 
         try:
             # 清理未使用的Docker网络
@@ -443,16 +456,15 @@ class DockerManager:
             container_name = config_data.get("CONTAINER_NAME", service_id)
             container = self.client.containers.get(container_name)
             container_id = container.id[:12]
-        
-            with open(config_path, 'r', encoding='utf-8') as config_file:
-                current_config = json.load(config_file)
             
             bot_data = {
                 "container_id": container_id,
-                "name": config_data.get("BOT_NAME", "default_bot"),
-                "config": json.dumps(current_config),
+                "bot_name": config_data.get("BOT_NAME", "default_bot"),
+                "config": json.dumps(config_data),
                 "service_id": service_id,
-                "user_id": user_id
+                "user_id": user_id,
+                "platform": config_data.get("PLATFORM", ""),
+                "model": config_data.get("MODEL", "")
             }
             
             # 保存到数据库
@@ -466,46 +478,83 @@ class DockerManager:
 
     def save_bot_to_db(self, bot_data):
         cursor = self.conn.cursor()
-        cursor.execute('''INSERT OR REPLACE INTO bots
-                        (container_id, name, config, service_id, user_id)
-                        VALUES (?, ?, ?, ?, ?)''',
-                       (bot_data['container_id'], bot_data['name'], bot_data['config'], 
-                        bot_data['service_id'], bot_data['user_id']))
-        self.conn.commit()
-        print(f"保存机器人数据到数据库，用户ID: {bot_data['user_id']}")
+        print(f"Saving bot data: {bot_data}")
+        try:
+            # 确保 config 是有效的 JSON 字符串
+            if isinstance(bot_data['config'], dict):
+                bot_data['config'] = json.dumps(bot_data['config'])
+            elif not isinstance(bot_data['config'], str):
+                raise ValueError("Config must be a dict or a JSON string")
 
-    def get_bot_list(self, user_id=None):
+            cursor.execute('''INSERT OR REPLACE INTO bots
+                            (container_id, bot_name, config, service_id, user_id, platform, model)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                        (bot_data['container_id'], bot_data['bot_name'], bot_data['config'], 
+                            bot_data['service_id'], bot_data['user_id'], bot_data['platform'], bot_data['model']))
+            self.conn.commit()
+            print(f"保存机器人数据到数据库，用户ID: {bot_data['user_id']}")
+        except sqlite3.IntegrityError as e:
+            print(f"数据库插入错误（可能是重复数据）: {e}")
+            self.conn.rollback()
+        except Exception as e:
+            print(f"保存机器人数据时发生错误: {e}")
+            self.conn.rollback()
+
+    def get_bot_list(self, user_id=None, page=1, per_page=10):
         cursor = self.conn.cursor()
 
         try:
             if user_id:
-                cursor.execute("SELECT container_id, name, config, service_id, user_id FROM bots WHERE user_id = ?", (user_id,))
+                query = "SELECT container_id, bot_name, config, service_id, user_id, platform, model FROM bots WHERE user_id = ?"
+                params = (user_id,)
             else:
-                cursor.execute("SELECT container_id, name, config, service_id, user_id FROM bots")
-            
+                query = "SELECT container_id, bot_name, config, service_id, user_id, platform, model FROM bots"
+                params = ()
+
+            # 添加分页
+            query += " LIMIT ? OFFSET ?"
+            params += (per_page, (page - 1) * per_page)
+
+            cursor.execute(query, params)
             rows = cursor.fetchall()
 
             bot_list = []
             for row in rows:
-                container_id, name, config, service_id, bot_user_id = row
-                try:
-                    container = self.client.containers.get(container_id)
-                    status = container.status
-                except docker.errors.NotFound:
-                    status = "not found"
+                container_id, bot_name, config, service_id, bot_user_id, platform, model = row
+                status = "unknown"
+                if container_id:
+                    try:
+                        container = self.client.containers.get(container_id)
+                        status = container.status
+                    except docker.errors.NotFound:
+                        status = "not found"
+                    except Exception as e:
+                        logger.error(f"获取容器状态时出错 (ID: {container_id}): {e}")
+                        status = "error"
+
+                # 解析配置并移除敏感信息
+                filtered_config = {}
+                if config:
+                    try:
+                        config_dict = json.loads(config)
+                        filtered_config = {k: v for k, v in config_dict.items() if not k.endswith('_API_KEY')}
+                    except json.JSONDecodeError:
+                        logger.error(f"解析配置 JSON 时出错 (ID: {container_id})")
 
                 bot_list.append({
-                    "id": container_id,
-                    "service_id": service_id,
-                    "name": name,
+                    "id": container_id or "",
+                    "service_id": service_id or "",
+                    "bot_name": bot_name or "",
                     "status": status,
-                    "config": config,
-                    "user_id": bot_user_id
+                    "config": filtered_config,
+                    "user_id": bot_user_id,
+                    "platform": platform or "",
+                    "model": model or ""
                 })
 
             return bot_list
         except Exception as e:
-            print(f"从数据库加载机器人列表时出错: {e}")
+            logger.error(f"从数据库加载机器人列表时出错: {e}")
             return []
     
     def get_container_logs(self, container_id):
@@ -527,7 +576,7 @@ class DockerManager:
             formatted_logs_str = '\n'.join(formatted_logs)
             
             # 匹配二维码链接
-            qr_pattern = r'(https://api\.qrserver\.com/v1/create-qr-code/\?size=400×400&data=https://login\.weixin\.qq\.com/l/[A-Za-z0-9-]+==)'
+            qr_pattern = r'(https://api\.pwmqr\.com/qrcode/create/\?url=https://login\.weixin\.qq\.com/l/[A-Za-z0-9-]+==|https://my\.tv\.sohu\.com/user/a/wvideo/getQRCode\.do\?text=https://login\.weixin\.qq\.com/l/[A-Za-z0-9-]+==|https://api\.qrserver\.com/v1/create-qr-code/\?size=400×400&data=https://login\.weixin\.qq\.com/l/[A-Za-z0-9-]+==)'
             matches = re.findall(qr_pattern, formatted_logs_str)
             
             result = {
@@ -540,7 +589,7 @@ class DockerManager:
                 result["qr_code"] = matches[-1]
             else:
                 print(f"未在容器 {container_id} 的日志中找到二维码链接")
-            
+            print(result["qr_code"])
             return result
         
         except docker.errors.NotFound:
@@ -554,8 +603,7 @@ class DockerManager:
 
     def delete_bot(self, container_id):
         try:
-            conn = sqlite3.connect(os.path.join(get_data_dir(), 'app.db'))
-            cursor = conn.cursor()
+            cursor = self.conn.cursor()
             
             # 查询机器人信息
             cursor.execute("SELECT service_id FROM bots WHERE container_id = ?", (container_id,))
@@ -565,7 +613,7 @@ class DockerManager:
                 service_id = result[0]
                 
                 # 删除配置文件和目录
-                config_dir = os.path.join(get_config_dir(), service_id)
+                config_dir = os.path.join(config.get_config_dir(), service_id)
                 if os.path.exists(config_dir):
                     for root, dirs, files in os.walk(config_dir, topdown=False):
                         for name in files:
@@ -577,7 +625,7 @@ class DockerManager:
                 
                 # 从数据库中删除机器人记录
                 cursor.execute("DELETE FROM bots WHERE container_id = ?", (container_id,))
-                conn.commit()
+                self.conn.commit()
                 
                 # 停止并删除Docker容器
                 try:
@@ -595,45 +643,81 @@ class DockerManager:
                 return False
         except Exception as e:
             print(f"删除机器人时出错：{e}")
+            self.conn.rollback()
             return False
-        finally:
-            if conn:
-                conn.close()
-            
-        # 刷新机器人列表
-        # self.bots = self.load_bots()
         
         
    
     def get_bot_config(self, bot_id):
-        """根据机器人 ID 从生成的 config.json 文件中获取其配置数据"""
-        config_dir = os.path.join(get_config_dir(), bot_id)
-        config_path = os.path.join(config_dir, 'config.json')
+        """根据机器人 ID 从数据库中获取其配置数据"""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT config FROM bots WHERE service_id = ?", (bot_id,))
+        result = cursor.fetchone()
         
-        if not os.path.exists(config_path):
+        if not result:
             return {}
 
-        with open(config_path, 'r', encoding='utf-8') as config_file:
-            config_data = json.load(config_file)
+        config_data = result[0]
         
+        if config_data is None:
+            logger.warning(f"机器人 ID {bot_id} 的配置为 None")
+            return {}
+
+        try:
+            config_dict = json.loads(config_data)
+        except json.JSONDecodeError:
+            logger.error(f"解析机器人 ID {bot_id} 的配置 JSON 时出错")
+            return {}
+        except TypeError:
+            logger.error(f"机器人 ID {bot_id} 的配置不是有效的 JSON 字符串")
+            return {}
+        
+        # 只保留当前平台的 API 参数
+        platform = config_dict.get('PLATFORM', '').lower()
+        api_keys_to_keep = PlatformConfig.get_platform_api_keys(platform)
+        
+        filtered_config = {k: v for k, v in config_dict.items() if not k.endswith('_API_KEY') and not k.endswith('_API_BASE')}
+        filtered_config.update({k: v for k, v in config_dict.items() if k.upper() in api_keys_to_keep})
+        
+        return filtered_config
+    
+    
+
+    def save_config(self, service_id, config_data):
+        print(f"保存配置，服务ID: {service_id}")
+        print(f"配置数据: {config_data}")
+        
+        # 验证平台
+        platform = config_data.get('PLATFORM', '').lower()
+        if not PlatformConfig.is_valid_platform(platform):
+            raise ValueError(f"无效的平台: {platform}")
+        
+        # 获取平台特定的API密钥
+        api_keys = PlatformConfig.get_platform_api_keys(platform)
+        print(f"平台 {platform} 需要的 API 密钥: {api_keys}")
+        
+        # 验证必要的API密钥是否存在
+        missing_keys = [key for key in api_keys if not config_data.get(key)]
+        if missing_keys:
+            print(f"缺少的 API 密钥: {missing_keys}")
+            raise ValueError(f"缺少必要的API密钥: {', '.join(missing_keys)}")
+        
+        # 确保 config_data 是 JSON 字符串
+        config_json = json.dumps(config_data)
+        
+        # 更新数据库
+        cursor = self.conn.cursor()
+        cursor.execute("UPDATE bots SET platform = ?, model = ?, bot_name = ?, config = ? WHERE service_id = ?", 
+                    (config_data.get('PLATFORM', ''), config_data.get('MODEL', ''), 
+                    config_data.get('BOT_NAME', ''), config_json, service_id))
+        self.conn.commit()
+
+        # 生成新的compose文件
+        self.process_config_and_generate_compose(service_id, config_data)
+
         return config_data
-    
-    
 
-    def save_config(self,service_id,config_data):
-        config_dir = os.path.join(get_config_dir(), service_id)
-        config_path = os.path.join(config_dir, 'config.json')
-        if os.path.exists(config_path):
-            with open(config_path, 'r', encoding='utf-8') as file:
-                existing_config = json.load(file)
-        else:
-            existing_config = {}
-
-        new_config={**existing_config,**config_data}
-        #生成新compose文件
-        self.process_config_and_generate_compose(service_id, new_config)
-        
-        return new_config
+    
     
     def get_server_resources(self):
         """获取服务器当前资源状态"""
@@ -677,3 +761,16 @@ class DockerManager:
             logger.info(f"Users table schema: {schema}")
         except sqlite3.Error as e:
             logger.error(f"获取表结构时发生错误: {e}")
+
+    def get_user_by_id(self, user_id):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+        user = cursor.fetchone()
+        if user:
+            return {
+                'id': user[0],
+                'username': user[1],
+                'role': user[3],
+                'max_bots': user[6]
+            }
+        return None

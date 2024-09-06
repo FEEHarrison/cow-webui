@@ -1,26 +1,13 @@
 from flask import Flask,Blueprint, request, jsonify, session
 from docker_manager import DockerManager
-from utils import make_response
 import jwt
 from functools import wraps
 from datetime import datetime, timedelta
+from config import config
+from utils import token_required, make_response
+
 user_bp = Blueprint('user', __name__)
 docker_manager = DockerManager()
-SECRET_KEY = 'your_secret_key'
-
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = request.headers.get('Authorization')
-        if not token:
-            return make_response(code=401, success=False, message="缺少令牌")
-        try:
-            data = jwt.decode(token.split()[1], SECRET_KEY, algorithms=["HS256"])
-            current_user = {'id': data['id'], 'role': data['role']}
-        except:
-            return make_response(code=401, success=False, message="无效或过期的令牌")
-        return f(current_user, *args, **kwargs)
-    return decorated
 
 @user_bp.route('/setup_admin', methods=['POST'])
 def setup_admin():
@@ -70,17 +57,18 @@ def login():
     data = request.json
     username = data.get('username')
     password = data.get('password')
+    
     user = docker_manager.authenticate_user(username, password)
     if user:
         token = jwt.encode({
             'id': user['id'],
             'role': user['role'],
-            'exp': datetime.now() + timedelta(hours=24)
-        }, SECRET_KEY, algorithm="HS256")
-        return make_response(data={"token": token, "role": user['role'], "username": username}, message="登录成功")
+            'exp': datetime.now() + timedelta(hours=config.JWT_EXPIRATION_HOURS)
+        }, config.SECRET_KEY, algorithm="HS256")
+        return make_response(data={"token": token, "user": user})
     else:
-        return make_response(code=401, success=False, message="用户名或密码错误")
-
+        return make_response(code=401, success=False, message="Invalid username or password")
+    
 @user_bp.route('/logout', methods=['POST'])
 def logout():
     session.clear()
@@ -112,7 +100,7 @@ def admin_required(f):
         if not token:
             return make_response(code=401, success=False, message="未提供认证令牌")
         try:
-            payload = jwt.decode(token.split()[1], SECRET_KEY, algorithms=["HS256"])
+            payload = jwt.decode(token.split()[1], config.SECRET_KEY, algorithms=["HS256"])
             if payload['role'] != 'root':
                 return make_response(code=403, success=False, message="需要管理员权限")
         except jwt.ExpiredSignatureError:
@@ -139,9 +127,8 @@ def check_login():
     if not token:
         return make_response(success=False, message="用户未登录")
     try:
-        # 假设令牌格式为 "Bearer <token>"
         token = token.split()[1]
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        payload = jwt.decode(token, config.SECRET_KEY, algorithms=["HS256"])
         return make_response(success=True, message="用户已登录", data={"user_id": payload['id']})
     except jwt.ExpiredSignatureError:
         return make_response(success=False, message="登录已过期")

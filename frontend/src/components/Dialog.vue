@@ -2,7 +2,7 @@
   <el-dialog
     v-model="dialogVisible"
     :title="containerId ? '编辑配置' : '创建机器人'"
-    width="50%"
+    width="70%"
     @close="closeDialog"
   >
     <el-form :model="config" label-width="150px">
@@ -12,21 +12,42 @@
           placeholder="输入机器人名称"
         ></el-input>
       </el-form-item>
-      <el-form-item label="模型">
-        <el-select v-model="config.MODEL" placeholder="请选择模型">
-          <el-option label="GPT-4o" value="gpt-4o"></el-option>
-          <el-option label="GPT-3.5-Turbo" value="gpt-3.5-turbo"></el-option>
-          <!-- Add more options if needed -->
+      <el-form-item label="API平台">
+        <el-select
+          v-model="config.PLATFORM"
+          placeholder="请选择API平台"
+          @change="handlePlatformChange"
+        >
+          <el-option
+            v-for="platform in platforms"
+            :key="platform.value"
+            :label="platform.label"
+            :value="platform.value"
+          ></el-option>
         </el-select>
       </el-form-item>
-      <el-form-item label="OpenAI API Key">
-        <el-input v-model="config.OPEN_AI_API_KEY"></el-input>
+      <el-form-item label="模型">
+        <el-select v-model="config.MODEL" placeholder="请选择模型">
+          <el-option
+            v-for="model in availableModels"
+            :key="model.value"
+            :label="model.label"
+            :value="model.value"
+          ></el-option>
+        </el-select>
       </el-form-item>
-      <el-form-item label="OpenAI API Base">
-        <el-input v-model="config.OPEN_AI_API_BASE"></el-input>
-      </el-form-item>
+      <template v-for="field in platformFields" :key="field.key">
+        <el-form-item
+          :label="field.label"
+          v-if="config.PLATFORM === field.platform"
+        >
+          <el-input
+            v-model="config[field.key]"
+            :placeholder="field?.placeholder"
+          ></el-input>
+        </el-form-item>
+      </template>
       <el-form-item label="单聊前缀">
-        <!-- <el-input v-model="config.SINGLE_CHAT_PREFIX"></el-input> -->
         <el-input
           v-model="config.SINGLE_CHAT_PREFIX"
           placeholder="输入以逗号分隔的前缀"
@@ -35,7 +56,7 @@
       <el-form-item label="单聊回复前缀">
         <el-input
           v-model="config.SINGLE_CHAT_REPLY_PREFIX"
-          placeholder="输入以逗号分隔的前缀"
+          placeholder="输入私聊前缀"
         ></el-input>
       </el-form-item>
       <el-form-item label="群聊前缀">
@@ -50,15 +71,11 @@
           placeholder="输入以逗号分隔的前缀输入ALL_GROUP表示全部群组"
         ></el-input>
       </el-form-item>
-
       <el-form-item label="最大对话Token数">
         <el-input-number
           v-model="config.CONVERSATION_MAX_TOKENS"
         ></el-input-number>
       </el-form-item>
-      <!-- <el-form-item label="过期时间(秒)">
-        <el-input-number v-model="config.EXPIRES_IN_SECONDS"></el-input-number>
-      </el-form-item> -->
       <el-form-item label="角色描述">
         <el-input
           type="textarea"
@@ -74,7 +91,6 @@
           step="0.01"
         ></el-slider>
       </el-form-item>
-
       <el-form-item>
         <el-button
           type="primary"
@@ -91,13 +107,11 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-// import { useLoading } from "@/hooks/useLoading.js";
+import { ref, reactive, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
 import request from "@/utils/request";
 import { defineProps } from "vue";
 
-// 使用 defineProps 定义传递给子组件的方法
 const props = defineProps({
   createBot: {
     type: Function,
@@ -108,23 +122,72 @@ const props = defineProps({
     required: false,
   },
 });
+
 const dialogVisible = ref(false);
 const config = ref({});
 const botId = ref(null);
-// const { loading, withLoading } = useLoading();
 const containerId = ref(null);
 const loading = ref(false);
+
+const platformsAndModels = reactive({
+  openai: {
+    label: "OpenAI",
+    modelArr: [
+      { label: "GPT-4o", value: "gpt-4o" },
+      { label: "GPT-3.5-Turbo", value: "gpt-3.5-turbo" },
+    ],
+  },
+  zhipuai: {
+    label: "智谱AI",
+    modelArr: [
+      { label: "GLM-4", value: "GLM-4" },
+      { label: "GLM-4-Flash", value: "GLM-4-Flash" },
+      { label: "GLM-3-Turbo", value: "GLM-3-Turbo" },
+    ],
+  },
+});
+
+const platforms = computed(() =>
+  Object.entries(platformsAndModels).map(([value, { label }]) => ({
+    label,
+    value,
+  }))
+);
+
+const availableModels = computed(
+  () => platformsAndModels[config.value.PLATFORM]?.modelArr || []
+);
+
+const platformFields = [
+  { platform: "openai", key: "OPEN_AI_API_KEY", label: "OpenAI API Key" },
+  { platform: "openai", key: "OPEN_AI_API_BASE", label: "OpenAI API Base" },
+  { platform: "zhipuai", key: "ZHIPU_AI_API_KEY", label: "智谱AI API Key" },
+  {
+    platform: "zhipuai",
+    key: "ZHIPU_AI_API_BASE",
+    label: "智谱AI API Base",
+    placeholder: "https://open.bigmodel.cn/api/paas/v4",
+  },
+  { platform: "tencent", key: "TENCENT_API_KEY", label: "腾讯混元 API Key" },
+  { platform: "tencent", key: "TENCENT_API_BASE", label: "腾讯混元 API Base" },
+];
+
+const handlePlatformChange = (platform) => {
+  config.value.MODEL = availableModels.value[0]?.value || "";
+  platformFields.forEach((field) => {
+    if (field.platform !== platform) {
+      config.value[field.key] = "";
+    }
+  });
+};
+
 const openConfigDialog = async (data, row) => {
   dialogVisible.value = true;
   const new_config = data || {};
-  console.log(row, "row");
   if (row) {
     config.value = {
       ...new_config,
       SINGLE_CHAT_PREFIX: (new_config?.SINGLE_CHAT_PREFIX || [])?.join(","),
-      SINGLE_CHAT_REPLY_PREFIX: (
-        new_config?.SINGLE_CHAT_REPLY_PREFIX || []
-      )?.join(","),
       GROUP_CHAT_PREFIX: (new_config?.GROUP_CHAT_PREFIX || [])?.join(","),
       GROUP_NAME_WHITE_LIST: (new_config?.GROUP_NAME_WHITE_LIST || [])?.join(
         ","
@@ -134,7 +197,8 @@ const openConfigDialog = async (data, row) => {
     containerId.value = row.id;
   } else {
     containerId.value = "";
-    config.value = {};
+    config.value = { PLATFORM: platforms.value[0]?.value || "" };
+    handlePlatformChange(config.value.PLATFORM);
   }
 };
 
@@ -143,16 +207,21 @@ const saveConfig = async () => {
   loading.value = true;
 
   try {
+    const body = {
+      ...config.value,
+      SINGLE_CHAT_PREFIX: config.value.SINGLE_CHAT_PREFIX?.split(/[，,]/),
+
+      GROUP_CHAT_PREFIX: config.value.GROUP_CHAT_PREFIX?.split(/[，,]/),
+      GROUP_NAME_WHITE_LIST: config.value.GROUP_NAME_WHITE_LIST?.split(/[，,]/),
+    };
+
+    platformFields.forEach((field) => {
+      if (field.platform !== config.value.PLATFORM) {
+        delete body[field.key];
+      }
+    });
+
     if (containerId.value) {
-      const body = {
-        ...config.value,
-        SINGLE_CHAT_PREFIX: config?.value?.SINGLE_CHAT_PREFIX?.split(/[，,]/),
-        SINGLE_CHAT_REPLY_PREFIX:
-          config?.value?.SINGLE_CHAT_REPLY_PREFIX?.split(/[，,]/),
-        GROUP_CHAT_PREFIX: config?.value?.GROUP_CHAT_PREFIX?.split(/[，,]/),
-        GROUP_NAME_WHITE_LIST:
-          config?.value?.GROUP_NAME_WHITE_LIST?.split(/[，,]/),
-      };
       const response = await request.post(
         `/api/save_bot_config/${botId.value}`,
         body
@@ -168,7 +237,7 @@ const saveConfig = async () => {
       }
     } else {
       if (props.createBot) {
-        await props.createBot(config.value);
+        await props.createBot(body);
         dialogVisible.value = false;
       }
     }
@@ -182,6 +251,16 @@ const saveConfig = async () => {
 const closeDialog = () => {
   dialogVisible.value = false;
 };
+
+watch(
+  () => config.value.PLATFORM,
+  (newPlatform) => {
+    if (newPlatform && !config.value.MODEL) {
+      config.value.MODEL = availableModels.value[0]?.value || "";
+    }
+  }
+);
+
 defineExpose({
   openConfigDialog,
   closeDialog,

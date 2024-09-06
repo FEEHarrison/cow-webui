@@ -5,3 +5,4 @@ gunicorn
 psutil
 bcrypt
 PyJWT
+python-dotenv

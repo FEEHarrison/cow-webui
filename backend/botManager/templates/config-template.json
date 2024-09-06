@@ -18,6 +18,8 @@
   "image_create_prefix": [
     "画"
   ],
+  "zhipu_ai_api_key": "",
+  "zhipu_ai_api_base": "https://open.bigmodel.cn/api/paas/v4",
   "speech_recognition": "True",
   "group_speech_recognition": "False",
   "voice_reply_voice": "False",

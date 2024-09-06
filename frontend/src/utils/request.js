@@ -73,12 +73,16 @@ export const login = async (data) => {
   const response = await post('/api/login', data);
   if (!response.error && response.data && response.data.token) {
     localStorage.setItem('token', response.data.token);
-    localStorage.setItem('role', response.data.role);
-    const userInfo = {
-      username: response.data.username,
-      role: response.data.role
-    };
-    localStorage.setItem('user', JSON.stringify(userInfo));
+    if (response.data.user) {
+      localStorage.setItem('role', response.data.user.role);
+      const userInfo = {
+        username: response.data.user.username,
+        role: response.data.user.role
+      };
+      localStorage.setItem('user', JSON.stringify(userInfo));
+    } else {
+      console.error('登录响应中缺少用户信息');
+    }
   }
   return response;
 };
