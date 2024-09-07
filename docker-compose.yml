@@ -6,7 +6,7 @@ services:
     build: ./frontend
     image: harrison7/cow-webui:latest  # 从Docker Hub拉取前端镜像
     ports:
-      - "127.0.0.1:5173:80"  # 将本地的5173端口映射到容器的80端口
+      - "5173:80"  # 将本地的5173端口映射到容器的80端口
     # expose:
     #   - "80"
     volumes:
@@ -19,7 +19,7 @@ services:
     build: ./backend
     image: harrison7/cow-webui-api:latest  # 从Docker Hub拉取后端镜像
     ports:
-      - "127.0.0.1:5002:5002"  # 将本地的5002端口映射到容器的5002端口
+      - "5002:5002"  # 将本地的5002端口映射到容器的5002端口
     # expose:
     #   - "5002"
     environment:
