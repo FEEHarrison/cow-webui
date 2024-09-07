@@ -8,7 +8,7 @@ import os
 import logging
 
 def check_environment():
-    required_vars = ['SECRET_KEY', 'CORS_ORIGINS']
+    required_vars = ['SECRET_KEY']
     for var in required_vars:
         if not os.getenv(var):
             raise EnvironmentError(f"缺少必要的环境变量: {var}")
@@ -21,8 +21,8 @@ def create_app():
     handler = logging.StreamHandler()
     handler.setLevel(logging.DEBUG)
     app.logger.addHandler(handler)
-    # CORS(app, resources={r"/*": {"origins": ["http://localhost:5173", "http://frontend:5173", "http://localhost:8081"]}}, allow_headers=["Authorization", "Content-Type"], supports_credentials=True)
-    CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Authorization", "Content-Type"], supports_credentials=True)
+    CORS(app, resources={r"/*": {"origins": [ "http://frontend:80","http://localhost:8082"]}}, allow_headers=["Authorization", "Content-Type"], supports_credentials=True)
+    # CORS(app, resources={r"/*": {"origins": "*"}}, allow_headers=["Authorization", "Content-Type"], supports_credentials=True)
 
     docker_manager = DockerManager()
     app.config['docker_manager'] = docker_manager

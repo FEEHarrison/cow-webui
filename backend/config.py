@@ -9,7 +9,7 @@ class Config:
     DB_PATH = os.path.join(BASE_DIR, 'data', 'app.db')
     CONFIG_DIR = os.path.join(BASE_DIR, "botManager", "configs")
     TEMPLATE_DIR = os.path.join(BASE_DIR, "botManager", "templates")
-    CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://localhost:8081').split(',')
+    # CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://localhost:8081').split(',')
     JWT_EXPIRATION_HOURS = 24
 
     @staticmethod

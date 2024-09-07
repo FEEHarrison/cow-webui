@@ -29,7 +29,7 @@ def create_bot(current_user):
 
 
 @bot_bp.route('/bots', methods=['GET'])
-@cross_origin(origins=config.CORS_ORIGINS, supports_credentials=True)
+# @cross_origin(origins=config.CORS_ORIGINS, supports_credentials=True)
 @token_required
 def get_bots(current_user):
     if current_user['role'] == 'root':
