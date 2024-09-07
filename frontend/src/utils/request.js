@@ -39,6 +39,10 @@ service.interceptors.response.use(
   },
   error => {
     if (error.response && error.response.status === 401) {
+      ElMessage.error('会话已过期，请重新登录');
+      // 清除本地存储的用户信息和令牌
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       // 未授权，可能是 token 过期或未登录
       router.push('/login')
     }
@@ -102,7 +106,7 @@ export const clearUserData = async () => {
 export const register = (data) => post('/api/register', data);
 export const getUsers = () => get('/api/users');
 export const deleteUser = (userId) => del(`/api/delete_user/${userId}`);
-export const checkAdminSetup = () => get('/api/check_admin_setup');
+
 export const checkLogin = () => get('/api/check_login');
 
 // 创建错误边界组件

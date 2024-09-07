@@ -141,7 +141,8 @@ cow-webui/
 项目提供了 Docker 支持，使用以下命令启动：
 
 ```bash
-#注意本项目是使用接口操作docker实现的，所以服务器需要先安装docker
+#进入项目根目录cow-webui
+docker compose up -d
 ```
 
 ## QA
