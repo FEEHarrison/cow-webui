@@ -1,0 +1,56 @@
+version: '3'
+
+services:
+  # 前端服务
+  frontend:
+    build: ./frontend
+    image: harrison7/cow-webui:latest  # 从Docker Hub拉取前端镜像
+    # ports:
+    #   - "5173:80"  # 将本地的5173端口映射到容器的80端口
+    expose:
+      - "80"
+    volumes:
+      - frontend_build:/usr/share/nginx/html  # 添加这行
+    networks:
+      - app_network
+    environment:
+      - VITE_BASE_API=http://backend:5002
+
+  # 后端服务
+  backend:
+    build: ./backend
+    image: harrison7/cow-webui-api:latest  # 从Docker Hub拉取后端镜像
+    # ports:
+    #   - "5002:5002"  # 将本地的5002端口映射到容器的5002端口
+    expose:
+      - "5002"
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock  
+      - SECRET_KEY=your_secret_key_here
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # 添加这一行
+      - ./backend:/app
+    networks:
+      - app_network
+
+  # Nginx 服务
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8081:80"  # 将本地8081端口映射到容器的80端口
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro  # 使用本地的nginx.conf文件
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - app_network 
+
+volumes:
+  frontend_build:  # 添加这行来定义卷
+
+
+networks:
+  app_network:
+    name: app_network
+    driver: bridge

@@ -7,7 +7,7 @@ from config import config
 bot_bp = Blueprint('bot', __name__)
 docker_manager = DockerManager()
 
-@bot_bp.route('/api/create_bot', methods=['POST'])
+@bot_bp.route('/create_bot', methods=['POST'])
 @token_required
 def create_bot(current_user):
     config_data = request.json
@@ -28,7 +28,7 @@ def create_bot(current_user):
         return make_response(code=500, success=False, message=str(e))
 
 
-@bot_bp.route('/api/bots', methods=['GET'])
+@bot_bp.route('/bots', methods=['GET'])
 @cross_origin(origins=config.CORS_ORIGINS, supports_credentials=True)
 @token_required
 def get_bots(current_user):
@@ -38,7 +38,7 @@ def get_bots(current_user):
         bot_list = docker_manager.get_bot_list(user_id=current_user['id'])
     return make_response(data=bot_list)
 
-@bot_bp.route('/api/logs/<container_id>', methods=['GET'])
+@bot_bp.route('/logs/<container_id>', methods=['GET'])
 def get_container_logs(container_id):
     logs_data = docker_manager.get_container_logs(container_id)
     if logs_data is None:
@@ -47,7 +47,7 @@ def get_container_logs(container_id):
     return make_response(data=logs_data)
    
 
-@bot_bp.route('/api/delete_bot/<container_id>', methods=['DELETE'])
+@bot_bp.route('/delete_bot/<container_id>', methods=['DELETE'])
 def delete_bot(container_id):
     success = docker_manager.manage_container(container_id,'remove')
     if success:
@@ -55,13 +55,13 @@ def delete_bot(container_id):
     else:
         return make_response(data={"status": "bot not found"},message="bot not found",code=404)
     
-@bot_bp.route('/api/restart_bot/<container_id>', methods=['POST'])
+@bot_bp.route('/restart_bot/<container_id>', methods=['POST'])
 def restart_bot(container_id):
     """重启指定ID的机器人容器"""
     status = docker_manager.manage_container(container_id, 'restart')
     return make_response(data={"status": status})
 
-@bot_bp.route('/api/save_bot_config/<bot_id>', methods=['POST'])
+@bot_bp.route('/save_bot_config/<bot_id>', methods=['POST'])
 def save_bot_config(bot_id):
     new_config = request.json
     try:
@@ -72,7 +72,7 @@ def save_bot_config(bot_id):
     except Exception as e:
         return make_response(code=500, success=False, message=f"保存配置失败: {str(e)}")
 
-@bot_bp.route('/api/get_bot_config/<bot_id>', methods=['GET'])
+@bot_bp.route('/get_bot_config/<bot_id>', methods=['GET'])
 def get_bot_config(bot_id):
     try:
         config = docker_manager.get_bot_config(bot_id)

@@ -1,0 +1,16 @@
+version: '2.0'
+services:
+  chatgpt-on-wechat:
+    image: zhayujie/chatgpt-on-wechat
+    container_name: 26055b25
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      MODEL: "gpt-4o"
+      PLATFORM: "openai"
+      SINGLE_CHAT_PREFIX: '[""]'
+      GROUP_CHAT_PREFIX: '[""]'
+      GROUP_NAME_WHITE_LIST: '[""]'
+      BOT_NAME: "31"
+      OPEN_AI_API_KEY: "23"
+      OPEN_AI_API_BASE: "13"

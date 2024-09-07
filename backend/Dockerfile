@@ -14,5 +14,6 @@ COPY . .
 
 EXPOSE 5002
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5002", "app:create_app()"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5002", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-", "--capture-output", "app:create_app()"]
+
 # CMD ["python", "app.py"]
