@@ -1,21 +1,18 @@
-# 使用 Python 官方镜像
-FROM python:3.9-slim
+FROM python:3.10
 
-# 设置工作目录
+RUN apt-get update && apt-get upgrade -y
+
+
+RUN groupadd -g 999 docker && usermod -aG docker root
+
 WORKDIR /app
 
-# 复制 requirements.txt 并安装依赖
-COPY requirements.txt ./
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 复制应用代码
 COPY . .
 
-# 确保 start.sh 有执行权限
-RUN chmod +x start.sh
-
-# 使用 start.sh 脚本启动应用
-CMD ["./start.sh"]
-
-# 暴露后端服务端口
 EXPOSE 5002
+
+CMD ["gunicorn", "--bind", "0.0.0.0:5002", "app:create_app()"]
+# CMD ["python", "app.py"]

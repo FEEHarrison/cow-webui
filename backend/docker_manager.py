@@ -10,6 +10,7 @@ import psutil
 import bcrypt
 from config import config
 from platform_config import PlatformConfig
+import traceback
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -23,7 +24,7 @@ class DockerManager:
             print(f"Docker client 初始化失败: {e}")
             self.client = None
 
-        self.db_path = config.DB_PATH
+        self.db_path = os.path.abspath(config.DB_PATH)
         self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.create_tables()
         print("DockerManager 初始化完成")
@@ -474,6 +475,7 @@ class DockerManager:
         
         except Exception as e:
             logger.error(f"启动容器失败: {e}")
+            logging.error(traceback.format_exc())  # 这将打印完整的堆栈跟踪
             return {"error": str(e)}
 
     def save_bot_to_db(self, bot_data):

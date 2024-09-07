@@ -4,10 +4,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     SECRET_KEY = os.getenv('SECRET_KEY', 'default_secret_key')
-    DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'app.db')
-    CONFIG_DIR = os.path.join(os.getcwd(), "botManager", "configs")
-    TEMPLATE_DIR = os.path.join(os.getcwd(), "botManager", "templates")
+    DB_PATH = os.path.join(BASE_DIR, 'data', 'app.db')
+    CONFIG_DIR = os.path.join(BASE_DIR, "botManager", "configs")
+    TEMPLATE_DIR = os.path.join(BASE_DIR, "botManager", "templates")
     CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
     JWT_EXPIRATION_HOURS = 24
 

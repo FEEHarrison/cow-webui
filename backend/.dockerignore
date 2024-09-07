@@ -1,0 +1,24 @@
+# 忽略 node_modules（Vue 3 前端相关）
+node_modules
+dist
+!.env
+
+# 忽略 Python 项目中的虚拟环境和编译文件
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# 忽略日志文件
+*.log
+*.log.*
+
+# 忽略环境配置文件
+.env
+*.env
+
+# 忽略版本控制文件夹
+.git
+.gitignore

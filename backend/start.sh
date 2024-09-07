@@ -3,6 +3,12 @@
 # 确保在backend目录下执行
 cd "$(dirname "$0")"
 
+
+source venv/bin/activate
+
+# 设置环境变量
+export SECRET_KEY="your_secret_key_here"
+export CORS_ORIGINS="http://localhost:5173"
 # 打印当前工作目录
 echo "当前工作目录: $(pwd)"
 

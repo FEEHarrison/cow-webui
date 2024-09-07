@@ -9,7 +9,7 @@ from utils import token_required, make_response
 user_bp = Blueprint('user', __name__)
 docker_manager = DockerManager()
 
-@user_bp.route('/setup_admin', methods=['POST'])
+@user_bp.route('/api/setup_admin', methods=['POST'])
 def setup_admin():
     if docker_manager.is_admin_setup():
         return make_response(code=400, success=False, message="管理员已经设置")
@@ -28,13 +28,13 @@ def setup_admin():
     except Exception as e:
         return make_response(code=500, success=False, message=f"设置管理员失败: {str(e)}")
 
-@user_bp.route('/check_admin_setup', methods=['GET'])
+@user_bp.route('/api/check_admin_setup', methods=['GET'])
 def check_admin_setup():
     is_setup = docker_manager.is_admin_setup()
     return make_response(data={"is_setup": is_setup})
 
 # 修改注册路由，确保所有新用户都是普通用户
-@user_bp.route('/register', methods=['POST'])
+@user_bp.route('/api/register', methods=['POST'])
 def register():
     data = request.json
     username = data.get('username')
@@ -52,7 +52,7 @@ def register():
     except Exception as e:
         return make_response(code=500, success=False, message="注册失败")
 
-@user_bp.route('/login', methods=['POST'])
+@user_bp.route('/api/login', methods=['POST'])
 def login():
     data = request.json
     username = data.get('username')
@@ -69,12 +69,12 @@ def login():
     else:
         return make_response(code=401, success=False, message="Invalid username or password")
     
-@user_bp.route('/logout', methods=['POST'])
+@user_bp.route('/api/logout', methods=['POST'])
 def logout():
     session.clear()
     return make_response(message="登出成功")
 
-@user_bp.route('/users', methods=['GET'])
+@user_bp.route('/api/users', methods=['GET'])
 @token_required
 def get_users(current_user):
     if current_user['role'] != 'root':
@@ -82,7 +82,7 @@ def get_users(current_user):
     users = docker_manager.get_all_users()
     return make_response(data=users)
 
-@user_bp.route('/delete_user/<int:user_id>', methods=['DELETE'])
+@user_bp.route('/api/delete_user/<int:user_id>', methods=['DELETE'])
 @token_required
 def delete_user(current_user, user_id):
     if current_user['role'] != 'root':
@@ -110,7 +110,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
    
-@user_bp.route('/clear_user_data', methods=['POST'])
+@user_bp.route('/api/clear_user_data', methods=['POST'])
 # @admin_required
 def clear_user_data():
     try:
@@ -121,7 +121,7 @@ def clear_user_data():
     
 
 
-@user_bp.route('/check_login', methods=['GET'])
+@user_bp.route('/api/check_login', methods=['GET'])
 def check_login():
     token = request.headers.get('Authorization')
     if not token:
