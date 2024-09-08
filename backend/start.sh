@@ -26,7 +26,7 @@ ERROR_LOG="$LOG_DIR/error.log"
 
 # 启动 Gunicorn
 echo "正在启动 Gunicorn..."
-gunicorn --timeout 120 --log-level debug -w 4 -b 0.0.0.0:5002 app:app --daemon \
+gunicorn --timeout 120 --log-level debug -w 4 -b 0.0.0.0:5002 "app:create_app()" --daemon \
     --access-logfile $ACCESS_LOG --error-logfile $ERROR_LOG
 
 # 检查 Gunicorn 是否成功启动

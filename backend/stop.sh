@@ -5,7 +5,7 @@ cd "$(dirname "$0")"
 
 # 获取所有 gunicorn 进程的 PID
 PIDS=$(pgrep -f "gunicorn.*app:app")
-
+sudo pkill gunicorn
 if [ -z "$PIDS" ]; then
   echo "没有找到正在运行的 gunicorn 进程"
 else
