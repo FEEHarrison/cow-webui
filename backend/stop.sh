@@ -2,6 +2,16 @@
 
 # 确保在backend目录下执行
 cd "$(dirname "$0")"
+# 获取所有 Gunicorn 进程信息
+ps_output=$(ps aux | grep gunicorn | grep -v grep)
+
+# 打印进程信息
+if [ -z "$ps_output" ]; then
+  echo "No Gunicorn processes found."
+else
+  echo "Gunicorn 进程信息:"
+  echo "$ps_output"
+fi
 
 # 获取所有 gunicorn 进程的 PID
 PIDS=$(pgrep -f "gunicorn.*app:app")
