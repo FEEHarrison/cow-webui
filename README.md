@@ -93,30 +93,34 @@ cow-webui/
 
 #### 前端部署
 
-1. 打包前端项目:
+配置环境变量并打包前端:
    ```bash
    cd frontend
-   npm run build
-   ```
-
-2. 配置环境变量:
-   ```bash
    touch .env.production
    echo "VITE_BASE_API=http://api-your-domain.com/" >> .env.production
+   //如VITE_BASE_API=https://bot.yourdomain.com
+
+   npm run build //打包前端
    ```
 
-3. 配置Nginx:
+
+
+
+3. 服务器配置Nginx:
    将以下配置添加到Nginx的server块中:
    ```nginx
-   location / {
-       root /path/to/your/frontend/dist;
-       try_files $uri $uri/ /index.html;
-   }
+    location / {
+        try_files $uri $uri/ /index.html;
+        root /your-path/cow-webui/frontend/dist;
+    }
+    location /api/ {
+        proxy_pass http://localhost:5002;
+    }
    ```
 
 #### 后端部署
 
-1. 使用脚本启动项目（推荐）:
+使用脚本启动项目（推荐）:
    ```bash
    chmod +x start.sh
    ./start.sh  # 启动服务
@@ -128,13 +132,6 @@ cow-webui/
    ./stop.sh  # 关闭服务
    ```
 
-2. 直接启动Flask服务（不推荐）:
-   ```bash
-   nohup python3 app.py & tail -f nohup.out  # 启动服务
-   ps -ef | grep app.py | grep -v grep       # 查看后台进程
-   kill <进程id>                             # 关闭进程
-   tail -f nohup.out                         # 查看日志
-   ```
 
 ## 使用 Docker(后续支持)
 
@@ -152,7 +149,7 @@ docker compose up -d
 
 3.如果启动后端成功，但是第一次创建机器人失败，请检查是否是docker拉取镜像失败，可以使用我代理的docker镜像地址进行拉取，可以在docker操作界面配置镜像源。
 
-4.进入项目默认管理员账号为admin
+4.进入项目默认管理员账号为admin，默认密码1234，默认提示管理员密码已设置直接进入到登录页，如果想自己重设密码：可以进入/backend/data 删除app.db数据库重新启动即可
 
 ```bash
 #为了加速镜像拉取,你可以使用以下命令设置registery mirror:
