@@ -47,11 +47,11 @@ cow-webui/
 ## demo
 
 ### UI展示
-![GitHub Sponsors](https://github.com/FEEHarrison/cow-webui/blob/main/sponsor/WechatIMG395.jpeg)
-![GitHub Sponsors](https://github.com/FEEHarrison/cow-webui/blob/main/sponsor/WechatIMG395.jpeg)
+![GitHub Sponsors](https://github.com/FEEHarrison/cow-webui/blob/main/sponsor/demo-ui.jpg)
+![GitHub Sponsors](https://github.com/FEEHarrison/cow-webui/blob/main/sponsor/demo-config.jpg)
 
 ### demo地址
-demo[GitHub Sponsors](https://bot.aigcboundless.cn)
+[demo](https://bot.aigcboundless.cn)
 
 
 ## 安装和运行
