@@ -44,6 +44,16 @@ cow-webui/
 - 查看机器人日志
 - 更新机器人配置
 
+## demo
+
+### UI展示
+![GitHub Sponsors](https://github.com/FEEHarrison/cow-webui/blob/main/sponsor/WechatIMG395.jpeg)
+![GitHub Sponsors](https://github.com/FEEHarrison/cow-webui/blob/main/sponsor/WechatIMG395.jpeg)
+
+### demo地址
+demo[GitHub Sponsors](https://bot.aigcboundless.cn)
+
+
 ## 安装和运行
 
 ### 后端设置
