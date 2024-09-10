@@ -23,6 +23,8 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
+    host: '0.0.0.0',
+    port: 80
   },
   base: '/' // 确保这里设置正确
 });

@@ -1,7 +1,6 @@
 import os
 import json
 import docker
-import subprocess
 import re
 import uuid
 import sqlite3
@@ -12,6 +11,8 @@ from config import config
 from platform_config import PlatformConfig
 import traceback
 from typing import Any, Dict
+from myyaml import simple_yaml_parse,process_environment_variables
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -319,12 +320,8 @@ class DockerManager:
         return str(uuid.uuid4())[:8]
    
     def restart_bots(self, container_id):
-        # db_path = os.path.join(config.get_data_dir(), 'app.db')
-        
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
+            cursor = self.conn.cursor()
             cursor.execute("SELECT service_id FROM bots WHERE container_id = ?", (container_id,))
             result = cursor.fetchone()
             
@@ -333,37 +330,71 @@ class DockerManager:
                 config_dir = os.path.join(config.get_config_dir(), service_id)
                 compose_file_path = os.path.join(config_dir, 'docker-compose.yml')
                 
+                if not os.path.exists(compose_file_path):
+                    return f"找不到 Docker Compose 文件: {compose_file_path}"
+                
+                # 读取 Docker Compose 文件
+                with open(compose_file_path, 'r') as file:
+                    compose_content = file.read()
+                
+                compose_config = simple_yaml_parse(compose_content)
+                print(f"解析后的 Docker Compose 配置: {compose_config}")
+
+                # 获取服务配置
+                service_config = next(iter(compose_config['services'].values()))
+                print(f"服务配置: {service_config}")
+
+                # 处理环境变量
+                environment = service_config.get('environment', {})
+                if isinstance(environment, list):
+                    environment = {item.split(':')[0].strip(): item.split(':')[1].strip() for item in environment if ':' in item}
+                elif isinstance(environment, dict):
+                    environment = {k: str(v) for k, v in environment.items()}
+                print(f"环境变量: {environment}")
+
+                # 准备容器配置
+                container_config = {
+                    'image': service_config['image'],
+                    'environment': environment,
+                    'volumes': self.parse_volumes(service_config.get('volumes', [])),
+                    'name': f"{service_id}_{service_config.get('container_name', 'default_bot')}",
+                    'detach': True
+                }
+
+                print(f"Container config: {container_config}")
+
                 try:
                     # 停止并移除旧容器
                     old_container = self.client.containers.get(container_id)
                     old_container.stop()
                     old_container.remove()
+                    print(f"旧容器 {container_id} 已停止并移除")
+                except docker.errors.NotFound:
+                    print(f"旧容器 {container_id} 不存在，继续重启流程")
 
-                    # 使用docker-compose启动新容器
-                    subprocess.run(['docker-compose', '-f', compose_file_path, 'up', '-d'], check=True)
-
-                    # 获取新创建的容器ID
-                    new_container = self.client.containers.get(service_id)
-                    new_container_id = new_container.id[:12]
-
-                    # 更新数据库中的容器ID
-                    cursor.execute("UPDATE bots SET container_id = ? WHERE container_id = ?", (new_container_id, container_id))
-                    conn.commit()
-
-                    return "容器重启成功，并已更新数据库"
+                # 创建并启动新容器
+                new_container = self.client.containers.run(**container_config)
                 
-                except subprocess.CalledProcessError as e:
-                    return f"容器启动失败: {str(e)}"
-                except Exception as e:
-                    return f"操作失败: {str(e)}"
+                new_container_id = new_container.id[:12]
+
+                # 更新数据库中的容器ID
+                cursor.execute("UPDATE bots SET container_id = ? WHERE container_id = ?", (new_container_id, container_id))
+                self.conn.commit()
+
+                print(f"机器人已重启，新容器ID: {new_container_id}")
+                return f"机器人重启成功，新容器ID: {new_container_id}"
             else:
                 return '找不到对应的 bots 对象'
         
         except sqlite3.Error as e:
+            print(f"数据库操作失败: {str(e)}")
             return f"数据库操作失败: {str(e)}"
-        finally:
-            if conn:
-                conn.close()
+        except docker.errors.APIError as e:
+            print(f"Docker API 错误: {str(e)}")
+            return f"Docker API 错误: {str(e)}"
+        except Exception as e:
+            print(f"重启机器人时发生错误: {str(e)}")
+            return f"重启机器人时发生错误: {str(e)}"
             
     def manage_container(self, container_id, action):
         try:
@@ -402,28 +433,40 @@ class DockerManager:
         compose_file_path = self.process_config_and_generate_compose(service_id, config_data)
 
         try:
-            # 清理未使用的Docker网络
-            subprocess.run(["docker", "network", "prune", "-f"], check=True)
+            # 读取 Docker Compose 文件
+            with open(compose_file_path, 'r') as file:
+                compose_content = file.read()
             
-            # 启动容器
-            result = subprocess.run(['docker-compose', '-f', compose_file_path, 'up', '-d'], 
-                                    check=True, 
-                                    capture_output=True, 
-                                    text=True)
+            compose_config = simple_yaml_parse(compose_content)
+            print(f"解析后的 Docker Compose 配置: {compose_config}")
+
+            # 获取服务配置
+            service_config = next(iter(compose_config['services'].values()))
+            print(f"服务配置: {service_config}")
+
+            # 处理环境变量
+            environment = service_config.get('environment', {})
+            if isinstance(environment, list):
+                environment = {item.split(':')[0].strip(): item.split(':')[1].strip() for item in environment if ':' in item}
+            elif isinstance(environment, dict):
+                environment = {k: str(v) for k, v in environment.items()}
+            print(f"原始环境变量: {environment}")
+
+            # 准备容器配置
+            container_config = {
+                'image': service_config['image'],
+                'environment': environment,
+                'volumes': self.parse_volumes(service_config.get('volumes', [])),
+                'name': f"{service_id}_{config_data.get('BOT_NAME', 'default_bot')}",
+                'detach': True
+            }
+
+            print(f"Container config: {container_config}")
+
+            # 创建并启动容器
+            container = self.client.containers.run(**container_config)
             
-            print(f"Docker Compose 输出: {result.stdout}")
-            
-            # 使用 docker-compose ps 命令获取容器ID
-            ps_result = subprocess.run(['docker-compose', '-f', compose_file_path, 'ps', '-q'],
-                                    check=True,
-                                    capture_output=True,
-                                    text=True)
-            container_id = ps_result.stdout.strip()[:8]
-            if not container_id:
-                raise Exception("无法获取容器ID")
-            
-            # 使用容器ID获取容器信息
-            container = self.client.containers.get(container_id)
+            container_id = container.id[:12]
             
             bot_data = {
                 "container_id": container_id,
@@ -440,8 +483,8 @@ class DockerManager:
             print(f"机器人创建成功，用户ID: {user_id}")
             return bot_data
         
-        except subprocess.CalledProcessError as e:
-            error_message = f"启动容器失败: {e.stderr}"
+        except docker.errors.APIError as e:
+            error_message = f"启动容器失败: {str(e)}"
             logger.error(error_message)
             return {"error": error_message}
         except Exception as e:
@@ -449,20 +492,36 @@ class DockerManager:
             logger.error(error_message)
             logger.error(traceback.format_exc())
             return {"error": error_message}
+
+    def parse_volumes(self, volumes):
+        parsed_volumes = {}
+        for volume in volumes:
+            parts = volume.split(':')
+            if len(parts) >= 2:
+                host_path, container_path = parts[:2]
+                mode = 'rw' if len(parts) < 3 else parts[2]
+                parsed_volumes[host_path] = {'bind': container_path, 'mode': mode}
+        return parsed_volumes
     def convert_unicode_to_chinese(self, data):
         if isinstance(data, dict):
+            if 'BOT_NAME' in data:
+                data['BOT_NAME'] = self.filter_bot_name(data['BOT_NAME'].strip())
             return {key: self.convert_unicode_to_chinese(value) for key, value in data.items()}
         elif isinstance(data, list):
             return [self.convert_unicode_to_chinese(item) for item in data]
         elif isinstance(data, str):
             try:
                 # 如果字符串已经是UTF-8编码，直接返回
-                return data
+                return data.strip()
             except UnicodeEncodeError:
                 # 如果字符串包含Unicode转义序列，进行解码
-                return data.encode('utf-8').decode('unicode_escape')
+                return data.encode('utf-8').decode('unicode_escape').strip()
         else:
             return data
+        
+    def filter_bot_name(self, name):
+        # 只允许字母、数字、下划线、点和短横线
+        return re.sub(r'[^a-zA-Z0-9_.-]', '_', name)
     def save_bot_to_db(self, bot_data):
         cursor = self.conn.cursor()
         print(f"Saving bot data: {bot_data}")
