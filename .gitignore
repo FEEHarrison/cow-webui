@@ -30,3 +30,5 @@ venv
 *.sw?
 .DS_Store
 __pycache__
+
+backend/data/app.db

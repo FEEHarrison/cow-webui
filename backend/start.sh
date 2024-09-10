@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 启动 Nginx
-nginx -g 'daemon off;' &
+# # 启动 Nginx
+# nginx -g 'daemon off;' &
 
 # 确保在backend目录下执行
 cd "$(dirname "$0")"
