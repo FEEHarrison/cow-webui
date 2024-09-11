@@ -18,7 +18,8 @@ def create_bot(current_user):
         user_id = current_user.get('id')
         if not user_id:
             return make_response(code=400, success=False, message="无法获取用户ID")
-
+          # 检查用户是否有权限创建新的机器人
+        
         data = docker_manager.start_docker_container(config_data, user_id)
         if "error" in data:
             return make_response(code=400, success=False, message=data["error"])
@@ -26,8 +27,35 @@ def create_bot(current_user):
     except Exception as e:
         print(f"创建机器人时出错: {str(e)}")
         return make_response(code=500, success=False, message=str(e))
-
-
+    
+# 添加新的路由来获取所有用户信息（仅管理员可用）
+@bot_bp.route('/users', methods=['GET'])
+@token_required
+def get_users(current_user):
+    if current_user['role'] != 'root':
+        return make_response(code=403, success=False, message="权限不足")
+    users = docker_manager.get_all_users()
+    return make_response(data=users)
+# 添加新的路由来更新用户的最大机器人数量（仅管理员可用）
+@bot_bp.route('/update_user_max_bots', methods=['POST'])
+@token_required
+def update_user_max_bots(current_user):
+    if current_user['role'] != 'root':
+        return make_response(code=403, success=False, message="权限不足")
+    
+    data = request.json
+    user_id = data.get('user_id')
+    max_bots = data.get('max_bots')
+    
+    if not user_id or max_bots is None:
+        return make_response(code=400, success=False, message="缺少必要参数")
+    
+    success, message = docker_manager.update_user_max_bots(user_id, max_bots)
+    if success:
+        return make_response(message=message)
+    else:
+        return make_response(code=500, success=False, message=message)
+    
 @bot_bp.route('/bots', methods=['GET'])
 # @cross_origin(origins=config.CORS_ORIGINS, supports_credentials=True)
 @token_required

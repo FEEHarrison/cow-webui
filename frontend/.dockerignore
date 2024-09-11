@@ -22,3 +22,11 @@ __pycache__
 # 忽略版本控制文件夹
 .git
 .gitignore
+
+# 忽略backend中data下的app.db，但不忽略data文件夹
+backend/data/*
+!backend/data/
+
+# 忽略botmanager下的configs文件夹中的内容，但不忽略configs文件夹
+backend/botmanager/configs/*
+!backend/botmanager/configs/

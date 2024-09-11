@@ -1,3 +1,5 @@
+
+
 # 阶段 1: 构建前端
 FROM node:18 as frontend-build
 WORKDIR /frontend
@@ -7,6 +9,11 @@ COPY frontend/ ./
 RUN npm run build
 
 
+# 设置环境变量
+ENV SECRET_KEY=your_secret_key_here
+ENV CORS_ORIGINS=http://localhost
+ENV DOCKER_ENV=true
+ENV BACKEND_PORT=5002
 
 # 阶段 2: 构建后端和最终镜像
 FROM python:3.9-alpine
@@ -25,8 +32,9 @@ RUN apk add --no-cache --virtual .build-deps \
     gcc \
     musl-dev \
     python3-dev \
-    linux-headers 
-
+    linux-headers \
+    nginx \
+    gettext
 
 # 设置后端工作目录
 WORKDIR /app/backend
@@ -49,13 +57,10 @@ COPY --from=frontend-build /frontend/dist /usr/share/nginx/html
 # 复制 Nginx 配置
 COPY nginx.conf /etc/nginx/nginx.conf
 
+
 # 复制启动脚本
 RUN chmod +x start.sh
 
-# 设置环境变量
-ENV SECRET_KEY=your_secret_key_here
-ENV CORS_ORIGINS=http://localhost
-ENV DOCKER_ENV=true
 
 # 暴露端口
 EXPOSE 80

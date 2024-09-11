@@ -1,7 +1,7 @@
 <template>
   <el-header class="header">
     <div class="header-left">
-      <h1 class="project-name">cow-webui</h1>
+      <h1 class="project-name">{{ projectName }}</h1>
     </div>
     <!-- <el-button @click="handleClearUserData" type="danger"
       >清空用户数据</el-button
@@ -31,6 +31,17 @@ import { logout } from "@/utils/request";
 const router = useRouter();
 const username = ref("");
 const userAvatar = ref("https://via.placeholder.com/40"); // 默认头像
+const projectName = ref(import.meta.env.VITE_PROJECT_NAME || "cow-webui");
+
+const fetchProjectName = async () => {
+  try {
+    const response = await fetch("/api/project-name");
+    const data = await response.json();
+    projectName.value = data.projectName;
+  } catch (error) {
+    console.error("获取项目名称失败:", error);
+  }
+};
 
 const fetchUserInfo = () => {
   const userString = localStorage.getItem("user");
@@ -61,6 +72,7 @@ const handleCommand = async (command) => {
 
 onMounted(() => {
   fetchUserInfo();
+  fetchProjectName();
 });
 </script>
 

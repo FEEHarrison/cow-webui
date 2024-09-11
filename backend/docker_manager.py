@@ -65,8 +65,54 @@ class DockerManager:
         self.conn.commit()
         print("数据库表结构检查和更新完成")
 
+    def check_user_bot_limit(self, user_id):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT max_bots FROM users WHERE id = ?", (user_id,))
+        result = cursor.fetchone()
+        print(f"查询结果: {result}")
+        
+        if not result:
+            print("用户不存在")
+            return False, "用户不存在", 0, 0
+        
+        max_bots = result[0]
+        print(f"最大机器人数量: {max_bots}")
+        
+        cursor.execute("SELECT COUNT(*) FROM bots WHERE user_id = ?", (user_id,))
+        current_bots = cursor.fetchone()[0]
+        print(f"当前机器人数量: {current_bots}")
+        
+        if max_bots == -1:
+            print("无限制")
+            return True, "无限制", current_bots, -1
+        
+        if max_bots is None:
+            print("max_bots 为 None，设置为 0")
+            max_bots = 0
+        
+        try:
+            remaining_bots = max_bots - current_bots
+            print(f"剩余可创建的机器人数量: {remaining_bots}")
+            return True, f"剩余可创建的机器人数量 {remaining_bots} 个机器人", current_bots, max_bots
+        except Exception as e:
+            print(f"计算剩余机器人数量时出错: {e}")
+            print(f"max_bots 类型: {type(max_bots)}, 值: {max_bots}")
+            print(f"current_bots 类型: {type(current_bots)}, 值: {current_bots}")
+            return False, "计算剩余机器人数量时出错", current_bots, max_bots
+        
+        
+        
+        return True, f"您还可以创建 {remaining_bots} 个机器人", current_bots, max_bots
     
-
+    def update_user_max_bots(self, user_id, max_bots):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("UPDATE users SET max_bots = ? WHERE id = ?", (max_bots, user_id))
+            self.conn.commit()
+            return True, "用户最大机器人数量更新成功"
+        except sqlite3.Error as e:
+            self.conn.rollback()
+            return False, f"更新失败: {str(e)}"
     def is_admin_setup(self):
         cursor = self.conn.cursor()
         cursor.execute("SELECT * FROM users WHERE role = 'root'")
@@ -137,7 +183,7 @@ class DockerManager:
             return False, f"清空用户数据时发生错误: {e}"
     
 
-    def create_user(self, username, password, role='user', max_bots=5):
+    def create_user(self, username, password, role='user', max_bots=0):
         if role != 'user':
             raise ValueError("只能创建普通用户账号")
         
@@ -175,14 +221,10 @@ class DockerManager:
         return None
     
     def get_all_users(self):
-        try:
-            cursor = self.conn.cursor()
-            cursor.execute('''SELECT id, username, role, max_bots FROM users''')
-            users = cursor.fetchall()
-            return [{"id": user[0], "username": user[1], "role": user[2], "max_bots": user[3]} for user in users]
-        except sqlite3.Error as e:
-            logger.error(f"获取用户列表时发生错误: {e}")
-            return []
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT id, username, role, max_bots FROM users")
+        users = cursor.fetchall()
+        return [{"id": user[0], "username": user[1], "role": user[2], "max_bots": user[3]} for user in users]
 
     def delete_user(self, user_id):
         try:
@@ -422,11 +464,26 @@ class DockerManager:
     def start_docker_container(self, config_data, user_id):
         print(f"开始创建机器人，用户ID: {user_id}")
         print(f"配置数据: {config_data}")
+        # 检查用户是否有权限创建新的机器人
+        # 获取当前用户的机器人列表
+        current_bots = self.get_bot_list(user_id=user_id)
+        current_bot_count = len(current_bots)
+        print(f"当前用户机器人数量: {current_bot_count}")
+
+        # 获取用户可操作的最大机器人数
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT max_bots FROM users WHERE id = ?", (user_id,))
+        result = cursor.fetchone()
+        if not result:
+            return {"error": "用户不存在"}
         
-        # 检查服务器资源是否足够
-        can_create, message = self.can_create_bot()
-        if not can_create:
-            return {"error": message}
+        max_bots = result[0]
+        print(f"用户可操作的最大机器人数: {max_bots}")
+
+        # 比较当前机器人数量和最大可操作数
+        if max_bots != -1 and current_bot_count >= max_bots:
+            return {"error": f"已达到最大机器人数量限制 ({max_bots})"}
+
 
         config_data = self.convert_unicode_to_chinese(config_data)
         service_id = self.generate_uuid()

@@ -5,10 +5,13 @@ services:
     image: harrison7/cow-webui:latest  # 替换为你的 DockerHub 用户名和镜像名
     ports:
       - "5173:80"  # 映射容器的 80 端口到主机的 80 端口  # 如果后端服务需要直接访问，也映射 5002 端口
+      - "5002:5002"  # 映射后端服务的 5002 端口到主机的 5002 端口
     environment:
       - SECRET_KEY=your_secret_key_here  # 替换为你的实际密钥
       - CORS_ORIGINS=http://localhost  # 根据需要设置 CORS
       - DOCKER_HOST=unix:///var/run/docker.sock
+      - PROJECT_NAME=harrison  # 添加这行，设置项目名称
+      - BACKEND_PORT=5002  # 添加后端端口配置
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # 如果需要在容器内管理 Docker
       - cow_data:/app/data  # 持久化数据存储

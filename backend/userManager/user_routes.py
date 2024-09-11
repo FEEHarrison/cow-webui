@@ -5,9 +5,15 @@ from functools import wraps
 from datetime import datetime, timedelta
 from config import config
 from utils import token_required, make_response
-
+import os
 user_bp = Blueprint('user', __name__)
 docker_manager = DockerManager()
+
+
+@user_bp.route('/project-name', methods=['GET'])
+def get_project_name():
+    project_name = os.environ.get('PROJECT_NAME', 'cow-webui')
+    return jsonify({'projectName': project_name})
 
 @user_bp.route('/setup_admin', methods=['POST'])
 def setup_admin():
@@ -45,7 +51,7 @@ def register():
     
     try:
         # 明确指定角色为 'user'
-        user_id = docker_manager.create_user(username, password, role='user', max_bots=5)
+        user_id = docker_manager.create_user(username, password, role='user', max_bots=0)
         return make_response(data={"id": user_id}, message="注册成功")
     except ValueError as e:
         return make_response(code=400, success=False, message=str(e))
@@ -134,3 +140,23 @@ def check_login():
         return make_response(success=False, message="登录已过期")
     except jwt.InvalidTokenError:
         return make_response(success=False, message="无效的令牌")
+    
+# 添加新的路由来更新用户的最大机器人数量（仅管理员可用）
+@user_bp.route('/update_user_max_bots', methods=['POST'])
+@token_required
+def update_user_max_bots(current_user):
+    if current_user['role'] != 'root':
+        return make_response(code=403, success=False, message="权限不足")
+    
+    data = request.json
+    user_id = data.get('user_id')
+    max_bots = data.get('max_bots')
+    
+    if not user_id or max_bots is None:
+        return make_response(code=400, success=False, message="缺少必要参数")
+    
+    success, message = docker_manager.update_user_max_bots(user_id, max_bots)
+    if success:
+        return make_response(message=message)
+    else:
+        return make_response(code=500, success=False, message=message)

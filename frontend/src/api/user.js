@@ -8,3 +8,5 @@ export const deleteUser = (userId) => del(`/api/users/${userId}`);
 // 添加 setupAdmin 函数
 export const setupAdmin = (password) => post('/api/setup_admin', { password });
 export const checkAdminSetup = () => get('/api/check_admin_setup');
+
+export const update_user_max_bots = (body) => post("/api/update_user_max_bots", body);
