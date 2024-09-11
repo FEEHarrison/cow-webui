@@ -40,5 +40,11 @@ else
     cat $ERROR_LOG
 fi
 
-# 启动 Nginx
-nginx -g 'daemon off;'
+# 检查是否在 Docker 环境中运行
+if [ -n "$DOCKER_ENV" ]; then
+    echo "在 Docker 环境中运行，启动 Nginx..."
+    exec nginx -g 'daemon off;'
+else
+    echo "不在 Docker 环境中运行，保持 Gunicorn 在前台运行..."
+    wait
+fi

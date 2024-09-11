@@ -25,12 +25,6 @@ RUN apk add --no-cache --virtual .build-deps \
     python3-dev \
     linux-headers 
 
-#     # 安装 Docker CLI
-# RUN apk add --no-cache docker-cli
-
-# # 添加当前用户到 Docker 组
-# RUN addgroup -S docker && adduser -S appuser -G docker
-# USER appuser
 
 # 设置后端工作目录
 WORKDIR /app/backend
@@ -58,6 +52,7 @@ RUN chmod +x start.sh
 # 设置环境变量
 ENV SECRET_KEY=your_secret_key_here
 ENV CORS_ORIGINS=http://localhost
+ENV DOCKER_ENV=true
 
 # 暴露端口
 EXPOSE 80
