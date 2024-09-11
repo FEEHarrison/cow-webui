@@ -4,41 +4,29 @@
 # nginx -g 'daemon off;' &
 
 # 确保在backend目录下执行
-cd "$(dirname "$0")"
+# 确保在正确的目录下
+cd /app/backend
 
 # 创建日志目录
 mkdir -p logs
 
-# source venv/bin/activate
-
-# 设置环境变量
-export SECRET_KEY="your_secret_key_here"
-export CORS_ORIGINS="http://localhost:5173"
-# 打印当前工作目录
-echo "当前工作目录: $(pwd)"
-
-# 列出目录内容
-echo "目录内容:"
-ls -la
-
-# 检查并创建日志目录
-LOG_DIR="logs"
-mkdir -p $LOG_DIR
 # 设置日志文件路径
-ACCESS_LOG="$LOG_DIR/access.log"
-ERROR_LOG="$LOG_DIR/error.log"
+ACCESS_LOG="logs/access.log"
+ERROR_LOG="logs/error.log"
+# source venv/bin/activate
 
 # 创建空的日志文件（如果不存在）
 touch $ACCESS_LOG $ERROR_LOG
 echo "日志文件创建/确认: $ACCESS_LOG, $ERROR_LOG"
 
-
+# 设置环境变量
+export SECRET_KEY="your_secret_key_here"
+export CORS_ORIGINS="http://localhost:5173"
 
 # 启动 Gunicorn
 echo "正在启动 Gunicorn..."
 gunicorn --timeout 120 --log-level debug -w 4 -b 0.0.0.0:5002 "app:create_app()" --daemon \
     --access-logfile $ACCESS_LOG --error-logfile $ERROR_LOG
-
 
 # 检查 Gunicorn 是否成功启动
 if [ $? -eq 0 ]; then
@@ -48,5 +36,9 @@ if [ $? -eq 0 ]; then
     echo "正在显示日志..."
     tail -f $ACCESS_LOG $ERROR_LOG
 else
-    echo "Gunicorn 启动失败,请检查错误日志"
+    echo "Gunicorn 启动失败，请检查错误日志"
+    cat $ERROR_LOG
 fi
+
+# 启动 Nginx
+nginx -g 'daemon off;'
