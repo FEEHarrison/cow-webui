@@ -6,6 +6,8 @@ RUN npm install
 COPY frontend/ ./
 RUN npm run build
 
+
+
 # 阶段 2: 构建后端和最终镜像
 FROM python:3.9-alpine
 
@@ -15,8 +17,8 @@ RUN apk add --no-cache nginx
 # 创建并激活虚拟环境
 ENV VIRTUAL_ENV=/opt/venv
 RUN python -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
+# ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV PATH="/app/backend:${PATH}"
 
 # 安装构建依赖和必要的系统包
 RUN apk add --no-cache --virtual .build-deps \
@@ -40,6 +42,7 @@ COPY backend/ .
 
 # 创建日志目录并设置权限
 RUN mkdir -p /app/backend/logs && chmod 777 /app/backend/logs
+
 # 复制前端构建结果
 COPY --from=frontend-build /frontend/dist /usr/share/nginx/html
 
@@ -58,4 +61,4 @@ ENV DOCKER_ENV=true
 EXPOSE 80
 
 # 运行应用
-CMD ["/bin/sh", "./start.sh"]
+CMD ["sh", "/app/backend/start.sh"]

@@ -31,4 +31,11 @@ venv
 .DS_Store
 __pycache__
 
-backend/data/app.db
+backend/data/*
+!backend/data/
+
+backend/logs/*
+!backend/logs/
+
+backend/botManager/configs/*
+!backend/botManager/configs/
