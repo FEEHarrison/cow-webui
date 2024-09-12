@@ -11,7 +11,7 @@ from config import config
 from platform_config import PlatformConfig
 import traceback
 from typing import Any, Dict
-from myyaml import simple_yaml_parse,process_environment_variables
+from myyaml import simple_yaml_parse
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -36,7 +36,6 @@ class DockerManager:
             self.conn.close()
 
     def connect_db(self):
-        # db_path = os.path.join(config.get_data_dir(), 'app.db')
         self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
     def create_tables(self):
         cursor = self.conn.cursor()
@@ -100,10 +99,7 @@ class DockerManager:
             print(f"current_bots 类型: {type(current_bots)}, 值: {current_bots}")
             return False, "计算剩余机器人数量时出错", current_bots, max_bots
         
-        
-        
-        return True, f"您还可以创建 {remaining_bots} 个机器人", current_bots, max_bots
-    
+            
     def update_user_max_bots(self, user_id, max_bots):
         try:
             cursor = self.conn.cursor()
@@ -399,7 +395,7 @@ class DockerManager:
                     'image': service_config['image'],
                     'environment': environment,
                     'volumes': self.parse_volumes(service_config.get('volumes', [])),
-                    'name': f"{service_id}_{service_config.get('container_name', 'default_bot')}",
+                    'name': f"{service_id}",
                     'detach': True
                 }
 
@@ -514,7 +510,7 @@ class DockerManager:
                 'image': service_config['image'],
                 'environment': environment,
                 'volumes': self.parse_volumes(service_config.get('volumes', [])),
-                'name': f"{service_id}_{config_data.get('BOT_NAME', 'default_bot')}",
+                'name': f"{service_id}",
                 'detach': True
             }
 
@@ -577,8 +573,8 @@ class DockerManager:
             return data
         
     def filter_bot_name(self, name):
-        # 只允许字母、数字、下划线、点和短横线
-        return re.sub(r'[^a-zA-Z0-9_.-]', '_', name)
+        # 允许中文字符、字母、数字、下划线、点和短横线
+        return re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9_.-]', '_', name)
     def save_bot_to_db(self, bot_data):
         cursor = self.conn.cursor()
         print(f"Saving bot data: {bot_data}")

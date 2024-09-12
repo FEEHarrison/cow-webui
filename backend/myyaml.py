@@ -94,17 +94,3 @@ def simple_yaml_parse(file_content):
 
     print(f"解析结果: {result}")
     return result
-def process_environment_variables(env_config):
-    print(f"原始环境变量配置: {env_config}")  # 添加这行来打印原始配置
-    processed_env = {}
-    for key, value in env_config.items():
-        if isinstance(value, str):
-            processed_env[key] = value
-        elif isinstance(value, (int, float, bool)):
-            processed_env[key] = str(value)
-        elif value is None:
-            processed_env[key] = ''
-        else:
-            print(f"警告: 未知类型的环境变量 {key}: {value} (类型: {type(value)})")
-    print(f"处理后的环境变量: {processed_env}")  # 添加这行来打印处理后的配置
-    return processed_env

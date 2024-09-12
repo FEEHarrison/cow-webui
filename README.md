@@ -39,9 +39,9 @@ cow-webui/
 ## 功能特性
 
 - 用户注册、登录和身份验证
-- 管理员用户设置和管理
-- 创建、管理和监控 Docker 容器中的机器人
-- 查看机器人日志
+- 管理员用户设置和管理、限制用户创建机器人个数
+- 创建、重启、管理和监控 Docker 容器中的机器人
+- 查看机器人日志、微信二维码
 - 更新机器人配置
 
 ## demo
@@ -54,96 +54,7 @@ cow-webui/
 [demo](https://bot.aigcboundless.cn)
 
 
-## 安装和运行
-
-### 后端设置
-
-1. 进入后端目录:
-   ```bash
-   cd backend
-   ```
-
-2. 创建虚拟环境并激活:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # 在 Windows 上使用 venv\Scripts\activate
-   ```
-
-3. 安装依赖:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. 运行后端服务:
-   ```bash
-   python app.py
-   ```
-
-### 前端设置
-
-1. 进入前端目录:
-   ```bash
-   cd frontend
-   ```
-
-2. 安装依赖:
-   ```bash
-   npm install
-   ```
-
-3. 运行开发服务器:
-   ```bash
-   npm run dev
-   ```
-
-
-
-
-### 服务器部署指引
-
-#### 前端部署
-
-配置环境变量并打包前端:
-   ```bash
-   cd frontend
-   touch .env.production
-   echo "VITE_BASE_API=http://api-your-domain.com/" >> .env.production
-   //如VITE_BASE_API=https://bot.yourdomain.com
-
-   npm run build //打包前端
-   ```
-
-
-
-
-3. 服务器配置Nginx:
-   将以下配置添加到Nginx的server块中:
-   ```nginx
-    location / {
-        try_files $uri $uri/ /index.html;
-        root /your-path/cow-webui/frontend/dist;
-    }
-    location /api/ {
-        proxy_pass http://localhost:5002;
-    }
-   ```
-
-#### 后端部署
-
-使用脚本启动项目（推荐）:
-   ```bash
-   chmod +x start.sh
-   ./start.sh  # 启动服务
-
-   tail -f access.log  # 查看运行日志
-   tail -f error.log   # 查看错误日志
-
-   chmod +x stop.sh 
-   ./stop.sh  # 关闭服务
-   ```
-
-
-## 使用 Docker(后续支持)
+## 使用 Docker部署
 
 项目提供了 Docker 支持，使用以下命令启动：
 
