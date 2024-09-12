@@ -57,6 +57,9 @@ COPY --from=frontend-build /frontend/dist /usr/share/nginx/html
 # 复制 Nginx 配置
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# 设置正确的所有权和权限
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html
 
 # 复制启动脚本
 RUN chmod +x start.sh

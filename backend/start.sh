@@ -23,6 +23,9 @@ echo "日志文件创建/确认: $ACCESS_LOG, $ERROR_LOG"
 export SECRET_KEY="your_secret_key_here"
 # export CORS_ORIGINS="http://localhost:5173"
 
+# 更改 /usr/share/nginx/html 目录的所有权
+chown -R nginx:nginx /usr/share/nginx/html
+chmod -R 755 /usr/share/nginx/html
 
 # 替换 Nginx 配置中的环境变量
 sed -i "s/\${BACKEND_PORT}/$BACKEND_PORT/g" /etc/nginx/nginx.conf
