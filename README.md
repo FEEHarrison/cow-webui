@@ -90,7 +90,7 @@ docker compose up -d
 个人能力有限，如果您想为项目做出贡献，请 fork 本项目，创建您的分支，进行修改后提交 pull request，非常期待您的贡献。
 
 ## 交流群
-![GitHub Sponsors](https://github.com/FEEHarrison/cow-webui/blob/main/sponsor/WechatIMG395.jpeg)
+![GitHub Sponsors](https://github.com/FEEHarrison/cow-webui/blob/main/sponsor/WechatIMG404.jpeg)
 
 ## 赞助我一杯咖啡 ☕️
 
