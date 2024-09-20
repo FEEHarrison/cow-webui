@@ -53,8 +53,22 @@ cow-webui/
 ### demo地址
 [demo](https://bot.aigcboundless.cn)
 
+## 环境
+前端需要node环境，后端python环境和docker环境
+## 本地部署
+```bash
+cd frontend
+npm run dev
 
-## 使用 Docker部署
+cd backend
+python3 -m venv venv //创建虚拟环境
+source venv/bin/activate //进入虚拟环境
+pip install -r requirements.txt //拉取依赖
+python app.py //启动项目
+```
+
+
+## 使用 Docker 线上部署
 
 项目提供了 Docker 支持，使用以下命令启动：
 
