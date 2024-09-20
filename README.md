@@ -52,6 +52,7 @@ cow-webui/
 
 ### demo地址
 [demo](https://bot.aigcboundless.cn)
+管理员账号为admin，默认密码1234
 
 ## 环境
 前端需要node环境，后端python环境和docker环境
@@ -87,7 +88,7 @@ docker compose up -d
 
 3.如果启动后端成功，但是第一次创建机器人失败，请检查是否是docker拉取镜像失败，可以使用我代理的docker镜像地址进行拉取，可以在docker操作界面配置镜像源。
 
-4.进入项目默认管理员账号为admin，默认密码1234，默认提示管理员密码已设置直接进入到登录页，如果想自己重设密码：可以进入/backend/data 删除app.db数据库重新启动即可
+4.进入项目默认提示管理员密码已设置直接进入到登录页，如果想自己重设密码：可以进入/backend/data 删除app.db数据库重新启动即可
 
 ```bash
 #为了加速镜像拉取,你可以使用以下命令设置registery mirror:
