@@ -3,6 +3,7 @@ version: '3.8'
 services:
   cow-webui:
     image: harrison7/cow-webui:1.0.0  # 替换为你的 DockerHub 用户名和镜像名
+    #image: registry.cn-hangzhou.aliyuncs.com/cow-webui/cow:1.0.0  # 国内使用阿里云仓库拉取镜像
     ports:
       - "5173:80"  # 映射容器的 80 端口到主机的 80 端口  # 如果后端服务需要直接访问，也映射 5002 端口
       - "5002:5002"  # 映射后端服务的 5002 端口到主机的 5002 端口

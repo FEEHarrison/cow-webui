@@ -1,8 +1,6 @@
 {
   "TZ": "Asia/Shanghai",
   "MODEL": "gpt-4o",
-  "OPEN_AI_API_KEY": "sk-xxx",
-  "OPEN_AI_API_BASE": "https://api.openai.com/v1",
   "PROXY": "",
   "HOT_RELOAD": "False",
   "SINGLE_CHAT_PREFIX": [""],
