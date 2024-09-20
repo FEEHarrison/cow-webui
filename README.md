@@ -64,7 +64,10 @@ cd backend
 python3 -m venv venv //创建虚拟环境
 source venv/bin/activate //进入虚拟环境
 pip install -r requirements.txt //拉取依赖
+
+docker pull zhayujie/chatgpt-on-wechat //拉取镜像依赖，拉取成功才可以正常创建机器人
 python app.py //启动项目
+
 ```
 
 
