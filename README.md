@@ -1,3 +1,5 @@
+
+
 # 项目名称: cow-webui
 
 ## 项目简介
@@ -101,7 +103,7 @@ docker compose up -d
 
 ## 项目配置
 
-配置文件位于 `templates/` 目录下，您可以根据需要编辑 `config.json` 和 `docker-compose.yml` 模版文件。
+配置文件位于 `templates/` 目录下，您可以根据需要编辑 `config-template.json` 和 `docker-compose.template.yml` 模版文件。
 
 ## 贡献
 
@@ -114,5 +116,3 @@ docker compose up -d
 
 如果你喜欢我的工作，可以通过wxpay来赞助我一杯咖啡。
 ![GitHub Sponsors](https://github.com/FEEHarrison/cow-webui/blob/main/sponsor/WechatIMG.jpeg)
-
-
